@@ -174,7 +174,7 @@ Custom branding is built into the Docker image. To update:
 If email is not configured, login links appear in container logs:
 
 ```bash
-docker logs ${STACK_NAME}_WEB
+docker logs ${STACK_NAME}_APP
 ```
 
 To enable email, sign up at [Resend](https://resend.com):

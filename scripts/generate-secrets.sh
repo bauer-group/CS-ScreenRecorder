@@ -157,6 +157,6 @@ echo "  4. Access Cap at http://localhost:3000 (dev) or https://your-domain (pro
 echo ""
 echo -e "${YELLOW}Note:${NC} If email is not configured, login links will be"
 echo "      written to the container logs. View with:"
-echo "      docker logs \${STACK_NAME}_WEB"
+echo "      docker logs \${STACK_NAME}_APP"
 echo ""
 echo -e "${GREEN}========================================${NC}"
