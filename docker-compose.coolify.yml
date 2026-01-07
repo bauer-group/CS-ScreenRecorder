@@ -17,9 +17,9 @@ services:
   # Cap Web Application
   # ---------------------------------------------------------------------------
   cap-web:
-    image: ghcr.io/bauer-group/cap-screen-recorder:${CAP_VERSION:-latest}
+    image: ghcr.io/bauer-group/cs-screenrecording/screen-recording:${CAP_VERSION:-latest}
     restart: unless-stopped
-    container_name: CAP_WEB
+    container_name: SCREENRECORDER_APP
     depends_on:
       mysql-server:
         condition: service_healthy
@@ -97,7 +97,7 @@ services:
   mysql-server:
     image: mysql:${MYSQL_VERSION:-8.0}
     restart: unless-stopped
-    container_name: CAP_MYSQL
+    container_name: SCREENRECORDER_DATABASE
     command: >
       --default-authentication-plugin=mysql_native_password
       --max_connections=${DATABASE_POOL_SIZE:-100}
@@ -155,7 +155,7 @@ services:
   minio-server:
     image: quay.io/minio/minio:${MINIO_VERSION:-latest}
     restart: unless-stopped
-    container_name: CAP_MINIO
+    container_name: SCREENRECORDER_MINIO
     hostname: minio-server
     command: server --address ":9000" --console-address ":9001" /data
     healthcheck:
@@ -187,7 +187,7 @@ services:
   # ---------------------------------------------------------------------------
   minio-setup:
     image: quay.io/minio/mc:latest
-    container_name: CAP_MINIO_SETUP
+    container_name: SCREENRECORDER_MINIO_SETUP
     depends_on:
       minio-server:
         condition: service_healthy
@@ -259,12 +259,12 @@ volumes:
   # MySQL database storage
   mysql-data:
     driver: local
-    name: cap-mysql-data
+    name: screenrecorder-database
 
   # MinIO object storage
   minio-data:
     driver: local
-    name: cap-minio-data
+    name: screenrecorder-storage
 
 
 # =============================================================================
@@ -274,5 +274,5 @@ networks:
   # Internal network for service communication
   local:
     driver: bridge
-    name: CAP_NETWORK
+    name: SCREENRECORDER
     enable_ipv6: true

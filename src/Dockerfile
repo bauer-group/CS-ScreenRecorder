@@ -5,7 +5,7 @@
 #
 # This Dockerfile builds a customized Cap image with:
 # - BAUER GROUP branding (logo, favicon)
-# - Custom configuration defaults
+# - Optional code patches
 #
 # USAGE:
 #   docker build -t screen-recording .
@@ -46,45 +46,42 @@ LABEL org.opencontainers.image.base.name="ghcr.io/capsoftware/cap:${CAP_VERSION}
 LABEL com.bauer-group.cap.version="${CAP_VERSION}"
 
 # =============================================================================
-# Apply Branding (if available)
+# Copy customization scripts and assets
 # =============================================================================
-# Cap branding is applied by replacing static assets in the Next.js public folder
-# The exact paths depend on Cap's internal structure
 
-# Copy branding assets if they exist
-COPY branding/ /tmp/branding/
+# Copy patches (for future code modifications)
+COPY patches/ /patches/
 
-# Create branding application script
-RUN if [ "$INCLUDE_BRANDING" = "true" ] && [ -d "/tmp/branding" ]; then \
-        echo "=== Preparing BAUER GROUP branding assets ==="; \
-        # Create branding directory for reference
-        mkdir -p /app/branding; \
-        # Copy all branding source files
-        cp -r /tmp/branding/* /app/branding/ 2>/dev/null || true; \
-        # Try to find and replace favicon/logo in common Next.js locations
-        # Cap uses Next.js, so assets are typically in /app/public or /app/.next/static
-        for target_dir in /app/public /app/apps/web/public /app/.next/static; do \
-            if [ -d "$target_dir" ]; then \
-                echo "Found asset directory: $target_dir"; \
-                # Copy favicon if exists
-                if [ -f "/tmp/branding/assets/favicon.ico" ]; then \
-                    cp /tmp/branding/assets/favicon.ico "$target_dir/favicon.ico" 2>/dev/null || true; \
-                    echo "  Applied favicon.ico"; \
-                fi; \
-                # Copy logo if exists
-                if [ -f "/tmp/branding/assets/logo.png" ]; then \
-                    cp /tmp/branding/assets/logo.png "$target_dir/logo.png" 2>/dev/null || true; \
-                    echo "  Applied logo.png"; \
-                fi; \
-            fi; \
-        done; \
-        echo ""; \
-        echo "Branding assets staged in /app/branding/"; \
-        ls -la /app/branding/ 2>/dev/null || echo "No branding files found"; \
+# Copy branding assets and scripts
+COPY branding/ /branding/
+
+# =============================================================================
+# Apply Patches (if any)
+# =============================================================================
+
+RUN chmod +x /patches/apply-patches.sh 2>/dev/null || true && \
+    if [ -f /patches/apply-patches.sh ]; then \
+        PATCHES_DIR=/patches APP_DIR=/app /patches/apply-patches.sh; \
+    fi
+
+# =============================================================================
+# Apply Branding
+# =============================================================================
+
+RUN if [ "$INCLUDE_BRANDING" = "true" ]; then \
+        chmod +x /branding/apply-branding.sh 2>/dev/null || true && \
+        if [ -f /branding/apply-branding.sh ]; then \
+            BRANDING_DIR=/branding /branding/apply-branding.sh; \
+        fi; \
     else \
-        echo "Branding disabled or no assets found."; \
-    fi && \
-    rm -rf /tmp/branding
+        echo "Branding disabled."; \
+    fi
+
+# =============================================================================
+# Cleanup
+# =============================================================================
+
+RUN rm -rf /patches /branding
 
 # =============================================================================
 # Health Check
@@ -92,7 +89,4 @@ RUN if [ "$INCLUDE_BRANDING" = "true" ] && [ -d "/tmp/branding" ]; then \
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD wget -q --spider http://localhost:3000/api/health || exit 1
 
-# =============================================================================
-# Default Port
-# =============================================================================
 EXPOSE 3000

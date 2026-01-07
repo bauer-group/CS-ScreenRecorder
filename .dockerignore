@@ -30,12 +30,16 @@ Thumbs.db
 # Tools container (separate image)
 tools/
 
-# Scripts (not needed in final image)
+# Scripts (generate-assets runs locally, not in image)
 scripts/
 
-# Source branding files (only assets folder needed)
+# Source branding files (EPS/SVG/PNG sources not needed, only generated assets)
 src/branding/*.eps
 src/branding/*.svg
 src/branding/*.png
 src/branding/branding.env
+
+# Keep assets and scripts for Docker build
 !src/branding/assets/
+!src/branding/apply-branding.sh
+!src/patches/

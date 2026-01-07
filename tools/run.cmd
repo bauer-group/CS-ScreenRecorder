@@ -12,8 +12,8 @@ set "TOOLS_DIR=%TOOLS_DIR:~0,-1%"
 for %%I in ("%TOOLS_DIR%\..") do set "PROJECT_DIR=%%~fI"
 
 REM Container/image name
-set "IMAGE_NAME=cap-screen-recorder-tools"
-set "CONTAINER_NAME=cap-screen-recorder-tools-shell"
+set "IMAGE_NAME=screen-recording-tools"
+set "CONTAINER_NAME=screen-recording-tools-shell"
 
 REM Check if Docker is running
 docker info >nul 2>&1
@@ -61,7 +61,7 @@ echo   Place logo files in src/branding/logo-source-*.{eps,svg,png}
 echo   Run generate-assets.sh to create favicons, app icons, etc.
 echo.
 echo Docker Image Build:
-echo   docker build -t cap-screen-recorder ./src
+echo   docker build -t screen-recording ./src
 echo.
 echo Type 'exit' to leave the container.
 echo ===========================================

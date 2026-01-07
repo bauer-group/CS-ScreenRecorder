@@ -13,8 +13,8 @@ $ErrorActionPreference = "Stop"
 # Configuration - get project dir (parent of tools folder)
 $ToolsDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $ProjectDir = Split-Path -Parent $ToolsDir
-$ImageName = "cap-screen-recorder-tools"
-$ContainerName = "cap-screen-recorder-tools-shell"
+$ImageName = "screen-recording-tools"
+$ContainerName = "screen-recording-tools-shell"
 
 # Check if Docker is running
 try {
@@ -74,7 +74,7 @@ Write-Host "  Place logo files in src/branding/logo-source-*.{eps,svg,png}"
 Write-Host "  Run generate-assets.sh to create favicons, app icons, etc."
 Write-Host ""
 Write-Host "Docker Image Build:"
-Write-Host "  docker build -t cap-screen-recorder ./src"
+Write-Host "  docker build -t screen-recording ./src"
 Write-Host ""
 Write-Host "Type 'exit' to leave the container."
 Write-Host "===========================================" -ForegroundColor Green

@@ -17,11 +17,10 @@ services:
   # ---------------------------------------------------------------------------
   # Cap Web Application
   # ---------------------------------------------------------------------------
-  cap-web:
-    # Custom branded image from GHCR
-    image: ghcr.io/bauer-group/cap-screen-recorder:${CAP_VERSION:-latest}
+  cap-web:    
+    image: ghcr.io/bauer-group/cs-screenrecording/screen-recording:${CAP_VERSION:-latest}
     restart: unless-stopped
-    container_name: ${STACK_NAME:-cap}_WEB
+    container_name: ${STACK_NAME:-SCREENRECORDER}_APP
     depends_on:
       mysql-server:
         condition: service_healthy
@@ -110,23 +109,23 @@ services:
       - "traefik.enable=true"
 
       # HTTP to HTTPS redirect middleware
-      - "traefik.http.middlewares.${STACK_NAME:-cap}-redirect-to-secure.redirectscheme.scheme=https"
-      - "traefik.http.middlewares.${STACK_NAME:-cap}-redirect-to-secure.redirectscheme.permanent=true"
+      - "traefik.http.middlewares.${STACK_NAME:-SCREENRECORDER}-redirect-to-secure.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.${STACK_NAME:-SCREENRECORDER}-redirect-to-secure.redirectscheme.permanent=true"
 
       # HTTP Router (redirect to HTTPS)
-      - "traefik.http.routers.${STACK_NAME:-cap}-http.rule=Host(`${SERVICE_HOSTNAME}`)"
-      - "traefik.http.routers.${STACK_NAME:-cap}-http.entrypoints=web"
-      - "traefik.http.routers.${STACK_NAME:-cap}-http.middlewares=${STACK_NAME:-cap}-redirect-to-secure"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-http.rule=Host(`${SERVICE_HOSTNAME}`)"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-http.entrypoints=web"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-http.middlewares=${STACK_NAME:-SCREENRECORDER}-redirect-to-secure"
 
       # HTTPS Router
-      - "traefik.http.routers.${STACK_NAME:-cap}-https.rule=Host(`${SERVICE_HOSTNAME}`)"
-      - "traefik.http.routers.${STACK_NAME:-cap}-https.entrypoints=web-secure"
-      - "traefik.http.routers.${STACK_NAME:-cap}-https.tls=true"
-      - "traefik.http.routers.${STACK_NAME:-cap}-https.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${STACK_NAME:-cap}-https.service=${STACK_NAME:-cap}"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-https.rule=Host(`${SERVICE_HOSTNAME}`)"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-https.entrypoints=web-secure"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-https.tls=true"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-https.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-https.service=${STACK_NAME:-SCREENRECORDER}"
 
       # Service
-      - "traefik.http.services.${STACK_NAME:-cap}.loadBalancer.server.port=3000"
+      - "traefik.http.services.${STACK_NAME:-SCREENRECORDER}.loadBalancer.server.port=3000"
 
     networks:
       local:
@@ -140,7 +139,7 @@ services:
   mysql-server:
     image: mysql:${MYSQL_VERSION:-8.0}
     restart: unless-stopped
-    container_name: ${STACK_NAME:-cap}_MYSQL
+    container_name: ${STACK_NAME:-SCREENRECORDER}_DATABASE
     command: >
       --default-authentication-plugin=mysql_native_password
       --max_connections=${DATABASE_POOL_SIZE:-100}
@@ -198,7 +197,7 @@ services:
   minio-server:
     image: quay.io/minio/minio:${MINIO_VERSION:-latest}
     restart: unless-stopped
-    container_name: ${STACK_NAME:-cap}_MINIO
+    container_name: ${STACK_NAME:-SCREENRECORDER}_MINIO
     hostname: minio-server
     command: server --address ":9000" --console-address ":9001" /data
     healthcheck:
@@ -228,30 +227,30 @@ services:
       - "traefik.enable=true"
 
       # MinIO API (S3)
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-http.rule=Host(`${S3_HOSTNAME}`)"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-http.entrypoints=web"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-http.middlewares=${STACK_NAME:-cap}-redirect-to-secure"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-http.rule=Host(`${S3_HOSTNAME}`)"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-http.entrypoints=web"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-http.middlewares=${STACK_NAME:-SCREENRECORDER}-redirect-to-secure"
 
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio.rule=Host(`${S3_HOSTNAME}`)"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio.entrypoints=web-secure"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio.tls=true"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio.service=${STACK_NAME:-cap}-minio"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio.rule=Host(`${S3_HOSTNAME}`)"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio.entrypoints=web-secure"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio.tls=true"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio.service=${STACK_NAME:-SCREENRECORDER}-minio"
 
-      - "traefik.http.services.${STACK_NAME:-cap}-minio.loadBalancer.server.port=9000"
+      - "traefik.http.services.${STACK_NAME:-SCREENRECORDER}-minio.loadBalancer.server.port=9000"
 
       # MinIO Console
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-console-http.rule=Host(`${S3_CONSOLE_HOSTNAME}`)"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-console-http.entrypoints=web"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-console-http.middlewares=${STACK_NAME:-cap}-redirect-to-secure"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console-http.rule=Host(`${S3_CONSOLE_HOSTNAME}`)"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console-http.entrypoints=web"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console-http.middlewares=${STACK_NAME:-SCREENRECORDER}-redirect-to-secure"
 
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-console.rule=Host(`${S3_CONSOLE_HOSTNAME}`)"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-console.entrypoints=web-secure"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-console.tls=true"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-console.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.${STACK_NAME:-cap}-minio-console.service=${STACK_NAME:-cap}-minio-console"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console.rule=Host(`${S3_CONSOLE_HOSTNAME}`)"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console.entrypoints=web-secure"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console.tls=true"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console.tls.certresolver=letsencrypt"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console.service=${STACK_NAME:-SCREENRECORDER}-minio-console"
 
-      - "traefik.http.services.${STACK_NAME:-cap}-minio-console.loadBalancer.server.port=9001"
+      - "traefik.http.services.${STACK_NAME:-SCREENRECORDER}-minio-console.loadBalancer.server.port=9001"
 
     networks:
       local:
@@ -263,7 +262,7 @@ services:
   # ---------------------------------------------------------------------------
   minio-setup:
     image: quay.io/minio/mc:latest
-    container_name: ${STACK_NAME:-cap}_MINIO_SETUP
+    container_name: ${STACK_NAME:-SCREENRECORDER}_MINIO_SETUP
     depends_on:
       minio-server:
         condition: service_healthy
@@ -348,12 +347,12 @@ volumes:
   # MySQL database storage
   mysql-data:
     driver: local
-    name: ${STACK_NAME:-cap}-mysql-data
+    name: ${STACK_NAME:-SCREENRECORDER}-database
 
   # MinIO object storage
   minio-data:
     driver: local
-    name: ${STACK_NAME:-cap}-minio-data
+    name: ${STACK_NAME:-SCREENRECORDER}-storage
 
 
 # =============================================================================
@@ -363,7 +362,7 @@ networks:
   # Internal network for service communication (IPv4 + IPv6)
   local:
     driver: bridge
-    name: ${STACK_NAME:-cap}
+    name: ${STACK_NAME:-SCREENRECORDER}
     enable_ipv6: true
 
   # External Traefik proxy network

@@ -9,8 +9,8 @@ set -euo pipefail
 # Configuration - get project dir (parent of tools folder)
 TOOLS_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$TOOLS_DIR")"
-IMAGE_NAME="cap-screen-recorder-tools"
-CONTAINER_NAME="cap-screen-recorder-tools-shell"
+IMAGE_NAME="screen-recording-tools"
+CONTAINER_NAME="screen-recording-tools-shell"
 
 # Colors
 RED='\033[0;31m'
@@ -99,7 +99,7 @@ echo "  Place logo files in src/branding/logo-source-*.{eps,svg,png}"
 echo "  Run generate-assets.sh to create favicons, app icons, etc."
 echo ""
 echo "Docker Image Build:"
-echo "  docker build -t cap-screen-recorder ./src"
+echo "  docker build -t screen-recording ./src"
 echo ""
 echo "Type 'exit' to leave the container."
 echo -e "${GREEN}===========================================${NC}"
