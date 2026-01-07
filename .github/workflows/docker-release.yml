@@ -1,0 +1,151 @@
+name: 🚀 Release & Docker Build
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '.github/**'
+      - '*.md'
+      - 'docs/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'docker-compose*.yml'
+      - '.dockerignore'
+  workflow_dispatch:
+    inputs:
+      force-release:
+        description: 'force create release'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  packages: write
+  security-events: write
+
+jobs:
+  # ============================================
+  # Validation Jobs
+  # ============================================
+
+  validate-compose:
+    name: 🔍 Validate Docker Compose
+    uses: bauer-group/automation-templates/.github/workflows/modules-validate-compose.yml@main
+    with:
+      compose-files: '["docker-compose.coolify.yml", "docker-compose.traefik.yml", "docker-compose.development.yml"]'
+      env-template: |
+        {
+          "STACK_NAME": "ci_test",
+          "STIRLING_VERSION": "latest-fat",
+          "TIME_ZONE": "UTC",
+          "PROXY_NETWORK": "EDGEPROXY",
+          "PRIVATESUBNET": "253",
+          "SERVICE_HOSTNAME": "pdf.example.com",
+          "EXPOSED_APP_PORT": "8080",
+          "SYSTEM_DEFAULT_LOCALE": "en-GB",
+          "SYSTEM_MAX_FILE_SIZE": "2000",
+          "SYSTEM_ROOT_URI_PATH": "/",
+          "SYSTEM_CONNECTION_TIMEOUT_MINUTES": "5",
+          "UI_APPNAMENAVBAR": "PDF Toolbox [CI Test]",
+          "UI_LOGOSTYLE": "modern",
+          "SYSTEM_GOOGLE_VISIBILITY": "false",
+          "SYSTEM_SHOW_UPDATE": "false",
+          "SYSTEM_SHOW_UPDATE_ONLY_ADMIN": "true",
+          "SECURITY_ENABLE_LOGIN": "true",
+          "SECURITY_INITIAL_LOGIN_USERNAME": "admin",
+          "SECURITY_INITIAL_LOGIN_PASSWORD": "ci_test_password",
+          "SYSTEM_SERVERCERTIFICATE_ORGANIZATIONNAME": "CI Test Org",
+          "KEYSTORE_PASSWORD": "",
+          "KEYSTORE_P12_BASE64": "",
+          "MAIL_ENABLED": "false",
+          "MAIL_HOST": "",
+          "MAIL_PORT": "587",
+          "MAIL_USERNAME": "",
+          "MAIL_PASSWORD": "",
+          "MAIL_FROM": ""
+        }
+
+  validate-scripts:
+    name: 🔍 Validate Shell Scripts
+    uses: bauer-group/automation-templates/.github/workflows/modules-validate-shellscript.yml@main
+    with:
+      scan-directory: '.'
+      severity: 'error'
+
+  # ============================================
+  # Release Job (only on main branch push)
+  # ============================================
+
+  release:
+    name: 📦 Create Semantic Release
+    needs: [validate-compose, validate-scripts]
+    if: |
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch') &&
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success'
+    uses: bauer-group/automation-templates/.github/workflows/modules-semantic-release.yml@main
+    with:
+      target-branch: 'main'
+      dry-run: false
+      force-release: ${{ inputs.force-release || false }}
+    secrets: inherit
+
+  # ============================================
+  # Docker Build Jobs
+  # ============================================
+
+  docker-build-release:
+    name: 🐳 Build & Push Docker Image
+    needs: release
+    if: needs.release.outputs.release-created == 'true'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      deploy-environment: 'production'
+      publish-to: 'both'
+      ghcr-image-name: 'bauer-group/CS-PDF-Toolbox/pdf-toolbox'
+      docker-image-name: 'bauergroup/pdf-toolbox'
+
+      release-version: ${{ needs.release.outputs.version }}
+
+      update-dockerfile-version: true
+      auto-tags: true
+      latest-tag: true
+
+      dockerfile-path: './src/Dockerfile'
+      docker-context: './src'
+      platforms: 'linux/amd64'
+
+      push: true
+
+      security-scan: false
+      security-fail-on: 'CRITICAL'
+      generate-sbom: true
+      sync-dockerhub-readme: true
+    secrets: inherit
+
+  docker-build-pr:
+    name: 🔨 Validate Docker Build (PR)
+    needs: [validate-compose, validate-scripts]
+    if: |
+      github.event_name == 'pull_request' &&
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-PDF-Toolbox/pdf-toolbox'
+
+      auto-tags: true
+      dockerfile-path: './src/Dockerfile'
+      docker-context: './src'
+      platforms: 'linux/amd64'
+
+      push: false
+
+      security-scan: false
+      security-fail-on: 'CRITICAL'
+    secrets: inherit

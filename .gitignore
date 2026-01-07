@@ -1,0 +1,27 @@
+# IDE
+.vscode/
+.idea/
+.claude/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Certificates (contain secrets)
+certs/*.p12
+certs/*.key
+certs/*.pem
+certs/*.crt
+certs/*.csr
+certs/.passphrase
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
