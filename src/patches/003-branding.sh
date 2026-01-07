@@ -202,26 +202,44 @@ find "$SEARCH_DIR" -type f \( -name "*.tsx" -o -name "*.ts" \) 2>/dev/null | whi
 done
 
 # =============================================================================
-# 4. Patch Logo component (if exists)
+# 4. Patch LogoSpinner component - Replace blue colors with orange
 # =============================================================================
-echo -e "${BLUE}[4/5] Looking for Logo components...${NC}"
+echo -e "${BLUE}[4/5] Patching LogoSpinner colors...${NC}"
 
-# Search for logo files
-LOGO_FILES=$(find "$APP_DIR" -type f -name "*.tsx" -path "*/components/*" 2>/dev/null | xargs grep -l "Logo\|logo" 2>/dev/null || true)
+# LogoSpinner.tsx is in packages/ui/src/components/
+LOGO_SPINNER="$APP_DIR/packages/ui/src/components/LogoSpinner.tsx"
 
-if [ -n "$LOGO_FILES" ]; then
-    echo -e "${YELLOW}  • Found logo references in:${NC}"
-    echo "$LOGO_FILES" | head -5 | while read f; do
-        echo "    - $(basename "$f")"
-    done
-    echo -e "${YELLOW}  • Logo replacement requires manual review${NC}"
+if [ -f "$LOGO_SPINNER" ]; then
+    # Replace blue colors with orange
+    # Original: #4785FF (bright blue outer circle) -> #FF8500 (BAUER orange)
+    # Original: #ADC9FF (light blue middle ring) -> #FDBA74 (light orange)
+
+    sed -i 's/#4785FF/#FF8500/g' "$LOGO_SPINNER"
+    sed -i 's/#4785ff/#FF8500/g' "$LOGO_SPINNER"
+    sed -i 's/#ADC9FF/#FDBA74/g' "$LOGO_SPINNER"
+    sed -i 's/#adc9ff/#FDBA74/g' "$LOGO_SPINNER"
+
+    echo -e "${GREEN}  ✓ Updated LogoSpinner colors (blue → orange)${NC}"
 else
-    echo -e "${YELLOW}  • No logo components found${NC}"
+    echo -e "${YELLOW}  • LogoSpinner.tsx not found at expected location${NC}"
+    # Try to find it elsewhere
+    FOUND_LOGO=$(find "$APP_DIR" -name "LogoSpinner.tsx" -type f 2>/dev/null | head -1)
+    if [ -n "$FOUND_LOGO" ]; then
+        sed -i 's/#4785FF/#FF8500/g' "$FOUND_LOGO"
+        sed -i 's/#4785ff/#FF8500/g' "$FOUND_LOGO"
+        sed -i 's/#ADC9FF/#FDBA74/g' "$FOUND_LOGO"
+        sed -i 's/#adc9ff/#FDBA74/g' "$FOUND_LOGO"
+        echo -e "${GREEN}  ✓ Found and updated LogoSpinner at: $FOUND_LOGO${NC}"
+    fi
 fi
 
-# Check for LogoSpinner or similar
-find "$APP_DIR/apps/web" -type f -name "*.tsx" 2>/dev/null | xargs grep -l "LogoSpinner\|CapLogo" 2>/dev/null | while read file; do
-    echo -e "${YELLOW}  • Found logo component: $(basename "$file")${NC}"
+# Also patch any other logo files that might exist
+find "$APP_DIR" -type f -name "*.tsx" 2>/dev/null | xargs grep -l "#4785FF\|#4785ff" 2>/dev/null | while read file; do
+    sed -i 's/#4785FF/#FF8500/g' "$file"
+    sed -i 's/#4785ff/#FF8500/g' "$file"
+    sed -i 's/#ADC9FF/#FDBA74/g' "$file"
+    sed -i 's/#adc9ff/#FDBA74/g' "$file"
+    echo -e "${GREEN}  ✓ Updated colors in $(basename "$file")${NC}"
 done
 
 # =============================================================================
