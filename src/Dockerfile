@@ -99,6 +99,19 @@ RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
 ARG NEXT_PUBLIC_DOCKER_BUILD=true
 ENV NEXT_PUBLIC_WEB_URL=http://localhost:3000
 
+# Dummy environment variables required for Next.js build
+# These are placeholder values used only during static page generation.
+# Real values are injected at runtime via environment variables.
+ENV DATABASE_URL="mysql://build:build@localhost:3306/cap" \
+    DATABASE_ENCRYPTION_KEY="build-time-placeholder-key-32chars" \
+    WEB_URL="http://localhost:3000" \
+    NEXTAUTH_SECRET="build-time-placeholder-secret" \
+    NEXTAUTH_URL="http://localhost:3000" \
+    CAP_AWS_BUCKET="placeholder-bucket" \
+    CAP_AWS_REGION="us-east-1" \
+    S3_PATH_STYLE="true" \
+    NODE_ENV="production"
+
 # Build the web application
 RUN echo "==> Building Cap web application..." && \
     pnpm run build:web
