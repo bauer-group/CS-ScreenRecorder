@@ -5,6 +5,7 @@
 #
 # This patch modifies:
 # - packages/database/emails/config.ts (add SMTP transport)
+# - packages/database/auth/auth-options.ts (check SMTP_HOST in addition to RESEND_API_KEY)
 # - packages/env/server.ts (add SMTP env vars)
 #
 # Supports:
@@ -32,7 +33,7 @@ echo ""
 # =============================================================================
 # 1. Patch server.ts - Add SMTP environment variables
 # =============================================================================
-echo -e "${BLUE}[1/3] Patching packages/env/server.ts...${NC}"
+echo -e "${BLUE}[1/4] Patching packages/env/server.ts...${NC}"
 
 SERVER_ENV="$APP_DIR/packages/env/server.ts"
 
@@ -49,9 +50,49 @@ else
 fi
 
 # =============================================================================
-# 2. Patch emails/config.ts - Add SMTP transport
+# 2. Patch auth-options.ts - Check SMTP_HOST in addition to RESEND_API_KEY
 # =============================================================================
-echo -e "${BLUE}[2/3] Patching emails/config.ts...${NC}"
+echo -e "${BLUE}[2/4] Patching packages/database/auth/auth-options.ts...${NC}"
+
+AUTH_OPTIONS="$APP_DIR/packages/database/auth/auth-options.ts"
+
+if [ -f "$AUTH_OPTIONS" ]; then
+    # The original code checks only for RESEND_API_KEY:
+    #   if (!serverEnv().RESEND_API_KEY) { // Development mode }
+    # We need to change it to also check for SMTP_HOST:
+    #   if (!serverEnv().RESEND_API_KEY && !serverEnv().SMTP_HOST) { // Development mode }
+
+    if grep -q "SMTP_HOST" "$AUTH_OPTIONS"; then
+        echo -e "${YELLOW}  • SMTP check already exists in auth-options.ts${NC}"
+    else
+        # Replace the RESEND_API_KEY check to also include SMTP_HOST
+        sed -i 's/if (!serverEnv().RESEND_API_KEY)/if (!serverEnv().RESEND_API_KEY \&\& !serverEnv().SMTP_HOST)/g' "$AUTH_OPTIONS"
+
+        # Verify the change was made
+        if grep -q "SMTP_HOST" "$AUTH_OPTIONS"; then
+            echo -e "${GREEN}  ✓ Added SMTP_HOST check to auth-options.ts${NC}"
+        else
+            echo -e "${YELLOW}  • Could not patch auth-options.ts (pattern may have changed)${NC}"
+            echo -e "${YELLOW}  • Trying alternative pattern...${NC}"
+
+            # Try alternative patterns that might exist in different versions
+            sed -i 's/!serverEnv().RESEND_API_KEY/!serverEnv().RESEND_API_KEY \&\& !serverEnv().SMTP_HOST/g' "$AUTH_OPTIONS"
+
+            if grep -q "SMTP_HOST" "$AUTH_OPTIONS"; then
+                echo -e "${GREEN}  ✓ Added SMTP_HOST check (alternative pattern)${NC}"
+            else
+                echo -e "${RED}  ✗ Failed to patch auth-options.ts${NC}"
+            fi
+        fi
+    fi
+else
+    echo -e "${RED}  ✗ auth-options.ts not found${NC}"
+fi
+
+# =============================================================================
+# 3. Patch emails/config.ts - Add SMTP transport
+# =============================================================================
+echo -e "${BLUE}[3/4] Patching emails/config.ts...${NC}"
 
 EMAIL_CONFIG="$APP_DIR/packages/database/emails/config.ts"
 
@@ -179,9 +220,9 @@ else
 fi
 
 # =============================================================================
-# 3. Add nodemailer dependency to package.json
+# 4. Add nodemailer dependency to package.json
 # =============================================================================
-echo -e "${BLUE}[3/3] Adding nodemailer dependency...${NC}"
+echo -e "${BLUE}[4/4] Adding nodemailer dependency...${NC}"
 
 PACKAGE_JSON="$APP_DIR/packages/database/package.json"
 
