@@ -5,7 +5,7 @@
 #
 # This patch modifies:
 # - packages/database/emails/config.ts (add SMTP transport)
-# - packages/utils/src/server-env.ts (add SMTP env vars)
+# - packages/env/server.ts (add SMTP env vars)
 #
 # Supports:
 # - Standard SMTP with TLS/STARTTLS
@@ -30,22 +30,22 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 
 # =============================================================================
-# 1. Patch server-env.ts - Add SMTP environment variables
+# 1. Patch server.ts - Add SMTP environment variables
 # =============================================================================
-echo -e "${BLUE}[1/3] Patching server-env.ts...${NC}"
+echo -e "${BLUE}[1/3] Patching packages/env/server.ts...${NC}"
 
-SERVER_ENV="$APP_DIR/packages/utils/src/server-env.ts"
+SERVER_ENV="$APP_DIR/packages/env/server.ts"
 
 if [ -f "$SERVER_ENV" ]; then
     if grep -q "SMTP_HOST" "$SERVER_ENV"; then
         echo -e "${YELLOW}  • SMTP env vars already exist${NC}"
     else
         # Add SMTP env vars after RESEND_FROM_DOMAIN
-        sed -i 's/RESEND_FROM_DOMAIN: z.string().optional(),/RESEND_FROM_DOMAIN: z.string().optional(),\n  SMTP_HOST: z.string().optional(),\n  SMTP_PORT: z.coerce.number().optional().default(587),\n  SMTP_TLS: z.string().optional().default("false"),\n  SMTP_USER: z.string().optional(),\n  SMTP_PASSWORD: z.string().optional(),\n  SMTP_FROM: z.string().optional(),\n  SMTP_FROM_NAME: z.string().optional(),/' "$SERVER_ENV"
+        sed -i 's/RESEND_FROM_DOMAIN: z.string().optional(),/RESEND_FROM_DOMAIN: z.string().optional(),\n    SMTP_HOST: z.string().optional(),\n    SMTP_PORT: z.coerce.number().optional().default(587),\n    SMTP_TLS: z.string().optional().default("false"),\n    SMTP_USER: z.string().optional(),\n    SMTP_PASSWORD: z.string().optional(),\n    SMTP_FROM: z.string().optional(),\n    SMTP_FROM_NAME: z.string().optional(),/' "$SERVER_ENV"
         echo -e "${GREEN}  ✓ Added SMTP environment variables${NC}"
     fi
 else
-    echo -e "${RED}  ✗ server-env.ts not found${NC}"
+    echo -e "${RED}  ✗ packages/env/server.ts not found${NC}"
 fi
 
 # =============================================================================
@@ -61,7 +61,7 @@ if [ -f "$EMAIL_CONFIG" ]; then
     else
         # Replace the entire config file with SMTP support
         cat > "$EMAIL_CONFIG" << 'CONFIGEOF'
-import { serverEnv } from "@cap/utils";
+import { serverEnv } from "@cap/env";
 import { Resend } from "resend";
 import { render } from "@react-email/render";
 import nodemailer from "nodemailer";
