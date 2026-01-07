@@ -5,15 +5,10 @@
 #
 # This patch modifies:
 # - apps/web/app/layout.tsx (metadata title, description, OG tags)
-# - apps/web/app/globals.css (CSS color variables)
+# - apps/web/app/globals.css (CSS color variables - both Hex AND HSL)
 # - Various UI components that display "Cap" branding
 #
-# Configuration via environment variables (with defaults):
-#   BRAND_APP_NAME      - Application name (default: "Screen Recorder")
-#   BRAND_COMPANY_NAME  - Company name (default: "BAUER GROUP")
-#   BRAND_DESCRIPTION   - App description
-#   BRAND_PRIMARY_*     - Primary color variants
-#   BRAND_SECONDARY_*   - Secondary color variants
+# Cap uses shadcn/ui which requires HSL color values in @layer base
 ###############################################################################
 
 set -e
@@ -47,34 +42,28 @@ BRAND_FULL_NAME="${BRAND_APP_NAME} [${BRAND_COMPANY_NAME}]"
 
 # =============================================================================
 # BAUER GROUP Color System
-# Primary: Orange (#FF8500)
-# Values loaded from branding.env or use defaults
+# Primary: Orange (#FF8500) = HSL(32, 100%, 50%)
 # =============================================================================
 
-# Primary Colors (Orange) - mapped from BRAND_ORANGE_* or BRAND_THEME_COLOR
+# Hex Colors (for legacy CSS)
 BRAND_PRIMARY="${BRAND_THEME_COLOR:-#FF8500}"
 BRAND_PRIMARY_2="${BRAND_ORANGE_600:-#EA6D00}"
 BRAND_PRIMARY_3="${BRAND_ORANGE_700:-#C2570A}"
-
-# Secondary Colors (Orange variants for consistency)
 BRAND_SECONDARY="${BRAND_ORANGE_400:-#FB923C}"
 BRAND_SECONDARY_2="${BRAND_ORANGE_300:-#FDBA74}"
 BRAND_SECONDARY_3="${BRAND_ORANGE_200:-#FED7AA}"
-
-# Tertiary Colors (Light orange tints)
 BRAND_TERTIARY="${BRAND_ORANGE_100:-#FFEDD5}"
 BRAND_TERTIARY_2="${BRAND_ORANGE_50:-#FFF7ED}"
-BRAND_TERTIARY_3="#FFFBF5"
 
-# Filler/Neutral Colors
-BRAND_FILLER="${BRAND_GRAY_100:-#F4F4F5}"
-BRAND_FILLER_2="${BRAND_GRAY_200:-#E4E4E7}"
-BRAND_FILLER_3="${BRAND_GRAY_300:-#D4D4D8}"
-BRAND_FILLER_TXT="${BRAND_GRAY_500:-#71717A}"
-
-# Text Colors
-BRAND_TEXT_PRIMARY_CSS="${BRAND_TEXT_PRIMARY:-#18181B}"
-BRAND_TEXT_SECONDARY_CSS="${BRAND_THEME_FOREGROUND:-#FFFFFF}"
+# HSL Colors for shadcn/ui (without hsl() wrapper, just values)
+# Orange #FF8500 = hsl(32, 100%, 50%)
+BRAND_PRIMARY_HSL="32 100% 50%"
+BRAND_PRIMARY_FOREGROUND_HSL="0 0% 100%"
+# Lighter orange for secondary/accent
+BRAND_SECONDARY_HSL="32 95% 95%"
+BRAND_SECONDARY_FOREGROUND_HSL="32 100% 25%"
+BRAND_ACCENT_HSL="32 95% 95%"
+BRAND_ACCENT_FOREGROUND_HSL="32 100% 25%"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}  Branding Patch${NC}"
@@ -83,42 +72,70 @@ echo ""
 echo -e "  App Name:      ${GREEN}${BRAND_FULL_NAME}${NC}"
 echo -e "  Company:       ${GREEN}${BRAND_COMPANY_NAME}${NC}"
 echo -e "  Primary Color: ${GREEN}${BRAND_PRIMARY}${NC} (Orange)"
+echo -e "  Primary HSL:   ${GREEN}${BRAND_PRIMARY_HSL}${NC}"
 echo ""
 
 # =============================================================================
-# 1. Patch globals.css - Update CSS color variables
+# 1. Patch globals.css - Update ALL CSS color variables (Hex AND HSL)
 # =============================================================================
-echo -e "${BLUE}[1/4] Patching apps/web/app/globals.css...${NC}"
+echo -e "${BLUE}[1/5] Patching apps/web/app/globals.css...${NC}"
 
 GLOBALS_CSS="$APP_DIR/apps/web/app/globals.css"
 
 if [ -f "$GLOBALS_CSS" ]; then
-    # Replace primary colors (Cap blue -> BAUER orange)
+    # -------------------------------------------------------------------------
+    # Part A: Replace legacy Hex color variables (if they exist)
+    # -------------------------------------------------------------------------
     sed -i "s/--primary: #005cb1;/--primary: ${BRAND_PRIMARY};/g" "$GLOBALS_CSS"
     sed -i "s/--primary-2: #004c93;/--primary-2: ${BRAND_PRIMARY_2};/g" "$GLOBALS_CSS"
     sed -i "s/--primary-3: #003b73;/--primary-3: ${BRAND_PRIMARY_3};/g" "$GLOBALS_CSS"
-
-    # Replace secondary colors
     sed -i "s/--secondary: #2eb4ff;/--secondary: ${BRAND_SECONDARY};/g" "$GLOBALS_CSS"
     sed -i "s/--secondary-2: #1696e0;/--secondary-2: ${BRAND_SECONDARY_2};/g" "$GLOBALS_CSS"
     sed -i "s/--secondary-3: #117ebd;/--secondary-3: ${BRAND_SECONDARY_3};/g" "$GLOBALS_CSS"
-
-    # Replace tertiary colors
     sed -i "s/--tertiary: #c5eaff;/--tertiary: ${BRAND_TERTIARY};/g" "$GLOBALS_CSS"
     sed -i "s/--tertiary-2: #d3e5ff;/--tertiary-2: ${BRAND_TERTIARY_2};/g" "$GLOBALS_CSS"
-    sed -i "s/--tertiary-3: #e0edff;/--tertiary-3: ${BRAND_TERTIARY_3};/g" "$GLOBALS_CSS"
+    echo -e "${GREEN}  ✓ Updated Hex color variables${NC}"
 
-    # Replace filler/neutral colors
-    sed -i "s/--filler: #efefef;/--filler: ${BRAND_FILLER};/g" "$GLOBALS_CSS"
-    sed -i "s/--filler-2: #e4e4e4;/--filler-2: ${BRAND_FILLER_2};/g" "$GLOBALS_CSS"
-    sed -i "s/--filler-3: #e2e2e2;/--filler-3: ${BRAND_FILLER_3};/g" "$GLOBALS_CSS"
-    sed -i "s/--filler-txt: #b3b3b3;/--filler-txt: ${BRAND_FILLER_TXT};/g" "$GLOBALS_CSS"
+    # -------------------------------------------------------------------------
+    # Part B: Replace shadcn/ui HSL color variables in @layer base
+    # These are the IMPORTANT ones that affect buttons, toggles, etc.
+    # -------------------------------------------------------------------------
 
-    # Replace text colors
-    sed -i "s/--text-primary: #0d1b2a;/--text-primary: ${BRAND_TEXT_PRIMARY_CSS};/g" "$GLOBALS_CSS"
-    sed -i "s/--text-secondary: #ffffff;/--text-secondary: ${BRAND_TEXT_SECONDARY_CSS};/g" "$GLOBALS_CSS"
+    # Primary color (main brand color - buttons, links, etc.)
+    # Original: --primary: 220.9 39.3% 11%;
+    sed -i "s/--primary: 220.9 39.3% 11%;/--primary: ${BRAND_PRIMARY_HSL};/g" "$GLOBALS_CSS"
+    sed -i "s/--primary: 220\.9 39\.3% 11%;/--primary: ${BRAND_PRIMARY_HSL};/g" "$GLOBALS_CSS"
 
-    echo -e "${GREEN}  ✓ Updated CSS color variables${NC}"
+    # Primary foreground (text on primary color)
+    # Original: --primary-foreground: 210 20% 98%;
+    sed -i "s/--primary-foreground: 210 20% 98%;/--primary-foreground: ${BRAND_PRIMARY_FOREGROUND_HSL};/g" "$GLOBALS_CSS"
+
+    # Secondary color (secondary buttons, badges)
+    # Original: --secondary: 220 14.3% 95.9%;
+    sed -i "s/--secondary: 220 14.3% 95.9%;/--secondary: ${BRAND_SECONDARY_HSL};/g" "$GLOBALS_CSS"
+    sed -i "s/--secondary: 220 14\.3% 95\.9%;/--secondary: ${BRAND_SECONDARY_HSL};/g" "$GLOBALS_CSS"
+
+    # Secondary foreground
+    # Original: --secondary-foreground: 220.9 39.3% 11%;
+    sed -i "s/--secondary-foreground: 220.9 39.3% 11%;/--secondary-foreground: ${BRAND_SECONDARY_FOREGROUND_HSL};/g" "$GLOBALS_CSS"
+    sed -i "s/--secondary-foreground: 220\.9 39\.3% 11%;/--secondary-foreground: ${BRAND_SECONDARY_FOREGROUND_HSL};/g" "$GLOBALS_CSS"
+
+    # Accent color (hover states, highlights)
+    # Original: --accent: 220 14.3% 95.9%;
+    sed -i "s/--accent: 220 14.3% 95.9%;/--accent: ${BRAND_ACCENT_HSL};/g" "$GLOBALS_CSS"
+    sed -i "s/--accent: 220 14\.3% 95\.9%;/--accent: ${BRAND_ACCENT_HSL};/g" "$GLOBALS_CSS"
+
+    # Accent foreground
+    # Original: --accent-foreground: 220.9 39.3% 11%;
+    sed -i "s/--accent-foreground: 220.9 39.3% 11%;/--accent-foreground: ${BRAND_ACCENT_FOREGROUND_HSL};/g" "$GLOBALS_CSS"
+    sed -i "s/--accent-foreground: 220\.9 39\.3% 11%;/--accent-foreground: ${BRAND_ACCENT_FOREGROUND_HSL};/g" "$GLOBALS_CSS"
+
+    # Ring color (focus rings)
+    # Original: --ring: 224 71.4% 4.1%;
+    sed -i "s/--ring: 224 71.4% 4.1%;/--ring: ${BRAND_PRIMARY_HSL};/g" "$GLOBALS_CSS"
+    sed -i "s/--ring: 224 71\.4% 4\.1%;/--ring: ${BRAND_PRIMARY_HSL};/g" "$GLOBALS_CSS"
+
+    echo -e "${GREEN}  ✓ Updated shadcn/ui HSL color variables${NC}"
 else
     echo -e "${RED}  ✗ globals.css not found${NC}"
 fi
@@ -126,19 +143,17 @@ fi
 # =============================================================================
 # 2. Patch layout.tsx - Update metadata
 # =============================================================================
-echo -e "${BLUE}[2/4] Patching apps/web/app/layout.tsx...${NC}"
+echo -e "${BLUE}[2/5] Patching apps/web/app/layout.tsx...${NC}"
 
 LAYOUT_FILE="$APP_DIR/apps/web/app/layout.tsx"
 
 if [ -f "$LAYOUT_FILE" ]; then
-    # Replace the title
+    # Replace the title (handle various quote styles)
     sed -i "s/title: \"Cap — Beautiful screen recordings, owned by you.\"/title: \"${BRAND_FULL_NAME}\"/g" "$LAYOUT_FILE"
+    sed -i "s/title: 'Cap — Beautiful screen recordings, owned by you.'/title: '${BRAND_FULL_NAME}'/g" "$LAYOUT_FILE"
 
     # Replace the description
     sed -i "s/description: \"Cap is the open source alternative to Loom. Lightweight, powerful, and cross-platform. Record and share in seconds.\"/description: \"${BRAND_DESCRIPTION}\"/g" "$LAYOUT_FILE"
-
-    # Replace OG title if different
-    sed -i "s/title: \"Cap — Beautiful screen recordings, owned by you.\"/title: \"${BRAND_FULL_NAME}\"/g" "$LAYOUT_FILE"
 
     echo -e "${GREEN}  ✓ Updated metadata in layout.tsx${NC}"
 else
@@ -146,39 +161,74 @@ else
 fi
 
 # =============================================================================
-# 3. Patch package.json - Update app name
+# 3. Replace "Cap" branding text throughout the codebase
 # =============================================================================
-echo -e "${BLUE}[3/4] Patching apps/web/package.json...${NC}"
+echo -e "${BLUE}[3/5] Replacing 'Cap' branding text...${NC}"
 
-WEB_PACKAGE="$APP_DIR/apps/web/package.json"
+# Files to search for Cap branding
+SEARCH_DIR="$APP_DIR/apps/web"
 
-if [ -f "$WEB_PACKAGE" ]; then
-    # Update the name field using node for safe JSON manipulation
-    node << NODESCRIPT
-const fs = require('fs');
-const file = '${WEB_PACKAGE}';
+# Replace "Cap Pro" with app name
+find "$SEARCH_DIR" -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.jsx" -o -name "*.js" \) 2>/dev/null | while read file; do
+    if grep -q "Cap Pro" "$file" 2>/dev/null; then
+        sed -i "s/Cap Pro/${BRAND_APP_NAME}/g" "$file"
+        echo -e "${GREEN}  ✓ Replaced 'Cap Pro' in $(basename "$file")${NC}"
+    fi
+done
 
-if (!fs.existsSync(file)) {
-    console.log('  • package.json not found');
-    process.exit(0);
-}
+# Replace "Cap Software, Inc." with company name
+find "$SEARCH_DIR" -type f \( -name "*.tsx" -o -name "*.ts" \) 2>/dev/null | while read file; do
+    if grep -q "Cap Software" "$file" 2>/dev/null; then
+        sed -i "s/Cap Software, Inc\./${BRAND_COMPANY_NAME}/g" "$file"
+        sed -i "s/Cap Software/${BRAND_COMPANY_NAME}/g" "$file"
+        echo -e "${GREEN}  ✓ Replaced 'Cap Software' in $(basename "$file")${NC}"
+    fi
+done
 
-const pkg = JSON.parse(fs.readFileSync(file, 'utf8'));
-pkg.description = '${BRAND_DESCRIPTION}';
+# Replace copyright
+find "$SEARCH_DIR" -type f \( -name "*.tsx" -o -name "*.ts" \) 2>/dev/null | while read file; do
+    if grep -q "© Cap" "$file" 2>/dev/null; then
+        sed -i "s/© Cap/© ${BRAND_COMPANY_NAME}/g" "$file"
+        echo -e "${GREEN}  ✓ Replaced copyright in $(basename "$file")${NC}"
+    fi
+done
 
-fs.writeFileSync(file, JSON.stringify(pkg, null, 2));
-console.log('  ✓ Updated package.json description');
-NODESCRIPT
+# Replace "Cap Settings" section headers
+find "$SEARCH_DIR" -type f \( -name "*.tsx" -o -name "*.ts" \) 2>/dev/null | while read file; do
+    if grep -q "Cap Settings" "$file" 2>/dev/null; then
+        sed -i "s/Cap Settings/${BRAND_APP_NAME} Settings/g" "$file"
+        echo -e "${GREEN}  ✓ Replaced 'Cap Settings' in $(basename "$file")${NC}"
+    fi
+done
+
+# =============================================================================
+# 4. Patch Logo component (if exists)
+# =============================================================================
+echo -e "${BLUE}[4/5] Looking for Logo components...${NC}"
+
+# Search for logo files
+LOGO_FILES=$(find "$APP_DIR" -type f -name "*.tsx" -path "*/components/*" 2>/dev/null | xargs grep -l "Logo\|logo" 2>/dev/null || true)
+
+if [ -n "$LOGO_FILES" ]; then
+    echo -e "${YELLOW}  • Found logo references in:${NC}"
+    echo "$LOGO_FILES" | head -5 | while read f; do
+        echo "    - $(basename "$f")"
+    done
+    echo -e "${YELLOW}  • Logo replacement requires manual review${NC}"
 else
-    echo -e "${YELLOW}  • package.json not found${NC}"
+    echo -e "${YELLOW}  • No logo components found${NC}"
 fi
 
-# =============================================================================
-# 4. Patch site config if exists
-# =============================================================================
-echo -e "${BLUE}[4/4] Searching for additional branding locations...${NC}"
+# Check for LogoSpinner or similar
+find "$APP_DIR/apps/web" -type f -name "*.tsx" 2>/dev/null | xargs grep -l "LogoSpinner\|CapLogo" 2>/dev/null | while read file; do
+    echo -e "${YELLOW}  • Found logo component: $(basename "$file")${NC}"
+done
 
-# Look for common config files that might contain branding
+# =============================================================================
+# 5. Update site config if exists
+# =============================================================================
+echo -e "${BLUE}[5/5] Patching additional config files...${NC}"
+
 SITE_CONFIG="$APP_DIR/apps/web/config/site.ts"
 if [ -f "$SITE_CONFIG" ]; then
     sed -i "s/name: \"Cap\"/name: \"${BRAND_APP_NAME}\"/g" "$SITE_CONFIG"
@@ -186,14 +236,12 @@ if [ -f "$SITE_CONFIG" ]; then
     echo -e "${GREEN}  ✓ Updated site config${NC}"
 fi
 
-# Update any hardcoded "Cap" references in common UI locations
-# Be careful to only replace standalone "Cap" not "Cap" as part of other words
-
-# Footer copyright
-find "$APP_DIR/apps/web" -name "*.tsx" -type f -exec grep -l "© Cap" {} \; 2>/dev/null | while read file; do
-    sed -i "s/© Cap/© ${BRAND_COMPANY_NAME}/g" "$file"
-    echo -e "${GREEN}  ✓ Updated copyright in $(basename "$file")${NC}"
-done
+# Update any constants file
+CONSTANTS_FILE="$APP_DIR/apps/web/lib/constants.ts"
+if [ -f "$CONSTANTS_FILE" ]; then
+    sed -i "s/\"Cap\"/\"${BRAND_APP_NAME}\"/g" "$CONSTANTS_FILE"
+    echo -e "${GREEN}  ✓ Updated constants${NC}"
+fi
 
 # =============================================================================
 # Summary
@@ -207,4 +255,7 @@ echo -e "Applied branding:"
 echo -e "  ${YELLOW}App Name${NC}:    ${BRAND_FULL_NAME}"
 echo -e "  ${YELLOW}Company${NC}:     ${BRAND_COMPANY_NAME}"
 echo -e "  ${YELLOW}Description${NC}: ${BRAND_DESCRIPTION}"
+echo -e "  ${YELLOW}Primary${NC}:     ${BRAND_PRIMARY} / HSL(${BRAND_PRIMARY_HSL})"
+echo ""
+echo -e "${YELLOW}Note:${NC} Logo SVG must be replaced manually in /branding/assets/"
 echo ""
