@@ -5,7 +5,7 @@
 #
 # This patch modifies:
 # - packages/database/auth/auth-options.ts (add Azure AD provider)
-# - packages/utils/src/server-env.ts (add env vars)
+# - packages/env/server.ts (add env vars)
 # - apps/web/utils/public-env.tsx (add microsoftAuthAvailable flag)
 # - apps/web/app/layout.tsx (pass flag to context)
 # - apps/web/app/(org)/login/form.tsx (add Microsoft button)
@@ -74,8 +74,8 @@ if [ -f "$AUTH_FILE" ]; then
         # Add import
         sed -i 's/import GoogleProvider from "next-auth\/providers\/google";/import GoogleProvider from "next-auth\/providers\/google";\nimport AzureADProvider from "next-auth\/providers\/azure-ad";/' "$AUTH_FILE"
 
-        # Create the provider config to insert
-        AZURE_PROVIDER='    AzureADProvider({\n      clientId: serverEnv().AZURE_AD_CLIENT_ID!,\n      clientSecret: serverEnv().AZURE_AD_CLIENT_SECRET!,\n      tenantId: serverEnv().AZURE_AD_TENANT_ID || "common",\n      authorization: {\n        params: {\n          scope: "openid email profile User.Read",\n        },\n      },\n      allowDangerousEmailAccountLinking: true,\n    }),'
+        # Create the provider config to insert (matching Google provider pattern)
+        AZURE_PROVIDER='    AzureADProvider({\n      clientId: serverEnv().AZURE_AD_CLIENT_ID!,\n      clientSecret: serverEnv().AZURE_AD_CLIENT_SECRET!,\n      tenantId: serverEnv().AZURE_AD_TENANT_ID || "common",\n      authorization: {\n        params: {\n          scope: "openid email profile",\n          prompt: "select_account",\n        },\n      },\n    }),'
 
         # Insert after GoogleProvider block - find the pattern and insert after
         # Using awk for multi-line insertion
@@ -97,22 +97,22 @@ else
 fi
 
 # =============================================================================
-# 2. Patch server-env.ts - Add environment variables
+# 2. Patch packages/env/server.ts - Add environment variables
 # =============================================================================
-echo -e "${BLUE}[2/6] Patching server-env.ts...${NC}"
+echo -e "${BLUE}[2/6] Patching packages/env/server.ts...${NC}"
 
-SERVER_ENV="$APP_DIR/packages/utils/src/server-env.ts"
+SERVER_ENV="$APP_DIR/packages/env/server.ts"
 
 if [ -f "$SERVER_ENV" ]; then
     if grep -q "AZURE_AD_CLIENT_ID" "$SERVER_ENV"; then
         echo -e "${YELLOW}  • Azure AD env vars already exist${NC}"
     else
-        # Add after GOOGLE_CLIENT_SECRET
-        sed -i 's/GOOGLE_CLIENT_SECRET: z.string().optional(),/GOOGLE_CLIENT_SECRET: z.string().optional(),\n  AZURE_AD_CLIENT_ID: z.string().optional(),\n  AZURE_AD_CLIENT_SECRET: z.string().optional(),\n  AZURE_AD_TENANT_ID: z.string().optional(),/' "$SERVER_ENV"
+        # Add after GOOGLE_CLIENT_SECRET (matching the pattern in the file)
+        sed -i 's/GOOGLE_CLIENT_SECRET: z.string().optional(),/GOOGLE_CLIENT_SECRET: z.string().optional(),\n    \/\/\/ Microsoft Entra ID (Azure AD) Auth\n    AZURE_AD_CLIENT_ID: z.string().optional(),\n    AZURE_AD_CLIENT_SECRET: z.string().optional(),\n    AZURE_AD_TENANT_ID: z.string().optional(),/' "$SERVER_ENV"
         echo -e "${GREEN}  ✓ Added Azure AD environment variables${NC}"
     fi
 else
-    echo -e "${YELLOW}  • server-env.ts not found${NC}"
+    echo -e "${RED}  ✗ packages/env/server.ts not found${NC}"
 fi
 
 # =============================================================================
@@ -175,25 +175,42 @@ if (!fs.existsSync(file)) {
 
 let content = fs.readFileSync(file, 'utf8');
 
-// Add handler function
-const handlerPattern = /const handleGoogleSignIn = \(\) => \{[\s\S]*?\n  \};/;
+// Add handler function (matching Google handler pattern exactly)
+const handlerPattern = /const handleGoogleSignIn = \(\) => \{[\s\S]*?signIn\("google"[\s\S]*?\}\);[\s\n\t]*\};/;
 const handlerMatch = content.match(handlerPattern);
 
 if (handlerMatch) {
     const microsoftHandler = `
 
   const handleMicrosoftSignIn = () => {
-    setLoading(true);
+    trackEvent("auth_started", { method: "microsoft", is_signup: true });
     signIn("azure-ad", {
-      callbackUrl: searchParams.get("callbackUrl") ?? "/dashboard",
+      ...(next && next.length > 0 ? { callbackUrl: next } : {}),
     });
   };`;
 
     content = content.replace(handlerMatch[0], handlerMatch[0] + microsoftHandler);
+    console.log('  ✓ Added handleMicrosoftSignIn handler');
+} else {
+    console.log('  • Could not match Google handler pattern, trying alternative...');
+    // Fallback: simpler pattern
+    if (content.includes('handleGoogleSignIn') && !content.includes('handleMicrosoftSignIn')) {
+        const insertPoint = content.indexOf('const handleGoogleSignIn');
+        const endOfHandler = content.indexOf('};', insertPoint) + 2;
+        const microsoftHandler = `
+
+  const handleMicrosoftSignIn = () => {
+    signIn("azure-ad", {
+      callbackUrl: "/dashboard",
+    });
+  };`;
+        content = content.slice(0, endOfHandler) + microsoftHandler + content.slice(endOfHandler);
+        console.log('  ✓ Added handleMicrosoftSignIn (fallback method)');
+    }
 }
 
-// Add Microsoft button after Google button
-const googleButtonPattern = /{publicEnv\.googleAuthAvailable && !oauthError && \([\s\S]*?Login with Google[\s\S]*?<\/MotionButton>\s*\)}/;
+// Add Microsoft button after Google button (matching exact structure)
+const googleButtonPattern = /\{publicEnv\.googleAuthAvailable && !oauthError && \([\s\S]*?Login with Google[\s\S]*?<\/MotionButton>[\s\n\t]*\)\}/;
 const buttonMatch = content.match(googleButtonPattern);
 
 if (buttonMatch) {
@@ -201,6 +218,8 @@ if (buttonMatch) {
         {publicEnv.microsoftAuthAvailable && !oauthError && (
           <MotionButton
             variant="gray"
+            type="button"
+            className="flex gap-2 justify-center items-center w-full text-sm"
             onClick={handleMicrosoftSignIn}
             disabled={loading || emailSent}
           >
@@ -210,6 +229,9 @@ if (buttonMatch) {
         )}`;
 
     content = content.replace(buttonMatch[0], buttonMatch[0] + microsoftButton);
+    console.log('  ✓ Added Microsoft button');
+} else {
+    console.log('  • Could not match Google button pattern');
 }
 
 fs.writeFileSync(file, content);
