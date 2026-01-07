@@ -170,7 +170,7 @@ services:
       - TZ=${TIME_ZONE:-Etc/UTC}
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-      - MINIO_API_CORS_ALLOW_ORIGIN=${MINIO_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
+      - MINIO_API_CORS_ALLOW_ORIGIN=*
     ports:
       - "${EXPOSED_MINIO_API_PORT:-9000}:9000"
       - "${EXPOSED_MINIO_CONSOLE_PORT:-9001}:9001"
@@ -249,8 +249,7 @@ services:
         mc admin policy create minio cap-policy /tmp/cap-policy.json
 
         mc admin policy attach minio cap-policy --user cap || true
-
-        echo ''
+        
         echo '=== MinIO Setup Complete ==='
         mc admin user info minio cap || true
         mc ls minio

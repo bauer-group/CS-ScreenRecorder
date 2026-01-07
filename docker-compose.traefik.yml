@@ -225,6 +225,7 @@ services:
       - TZ=${TIME_ZONE:-Etc/UTC}
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_API_CORS_ALLOW_ORIGIN=*
       - MINIO_DOMAIN=${S3_HOSTNAME}
       - MINIO_BROWSER_REDIRECT=true
       - MINIO_BROWSER_REDIRECT_URL=https://${S3_CONSOLE_HOSTNAME}
@@ -335,8 +336,7 @@ services:
         mc admin policy create minio cap-policy /tmp/cap-policy.json
 
         mc admin policy attach minio cap-policy --user cap || true
-
-        echo ''
+        
         echo '=== MinIO Setup Complete ==='
         mc admin user info minio cap || true
         mc ls minio
