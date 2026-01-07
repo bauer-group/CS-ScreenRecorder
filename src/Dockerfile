@@ -27,6 +27,8 @@ ARG CAP_VERSION=cap-v0.4.0
 ARG NODE_VERSION=24
 ARG INCLUDE_BRANDING=true
 
+# Note: Branding is configured via src/branding/branding.env
+
 # =============================================================================
 # Stage 1: Base Image
 # =============================================================================
@@ -67,15 +69,18 @@ WORKDIR /app
 # Copy source code from fetcher
 COPY --from=source /src .
 
-# Copy custom patches
+# Copy custom patches and branding configuration
 COPY patches/ /patches/
+COPY branding/branding.env /branding/branding.env
 
-# Apply patches (Microsoft Entra ID, etc.)
+# Apply patches (Microsoft Entra ID, SMTP, Branding, etc.)
 # Patches are applied to TypeScript source BEFORE build
 RUN chmod +x /patches/apply-patches.sh 2>/dev/null || true && \
     if [ -f /patches/apply-patches.sh ]; then \
         echo "==> Applying patches..." && \
-        PATCHES_DIR=/patches APP_DIR=/app /patches/apply-patches.sh; \
+        PATCHES_DIR=/patches APP_DIR=/app \
+        BRANDING_ENV=/branding/branding.env \
+        /patches/apply-patches.sh; \
     else \
         echo "==> No patches to apply"; \
     fi
