@@ -1,5 +1,5 @@
 # =============================================================================
-# Cap Screen Recorder - Development Configuration
+# Screen Recorder - Development Configuration
 # =============================================================================
 # Usage: docker compose -f docker-compose.development.yml up -d
 #
@@ -73,7 +73,7 @@ services:
       - CAP_AWS_BUCKET_URL=http://localhost:${EXPOSED_MINIO_API_PORT:-9000}/videos
 
       # -- Video Settings --
-      - CAP_VIDEOS_DEFAULT_PUBLIC=${CAP_VIDEOS_DEFAULT_PUBLIC:-true}
+      - CAP_VIDEOS_DEFAULT_PUBLIC=${CAP_VIDEOS_DEFAULT_PUBLIC:-false}
       - CAP_ALLOWED_SIGNUP_DOMAINS=${CAP_ALLOWED_SIGNUP_DOMAINS:-}
 
       # -- Email (Optional: SMTP or Resend) --
@@ -170,6 +170,7 @@ services:
       - TZ=${TIME_ZONE:-Etc/UTC}
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_API_CORS_ALLOW_ORIGIN=${MINIO_CORS_ORIGINS:-http://localhost:3000,http://localhost:5173}
     ports:
       - "${EXPOSED_MINIO_API_PORT:-9000}:9000"
       - "${EXPOSED_MINIO_CONSOLE_PORT:-9001}:9001"
@@ -191,42 +192,30 @@ services:
     environment:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - CAP_AWS_ACCESS_KEY=cap
       - CAP_AWS_SECRET_KEY=${CAP_AWS_SECRET_KEY}
     entrypoint: /bin/sh
     command:
       - -c
       - |
-        echo '=== MinIO Setup for Cap Screen Recorder (Development) ==='
+        set -e
+
+        echo '=== MinIO Setup for Screen Recorder ==='
         echo 'Waiting for MinIO to be ready...'
         sleep 5
 
         echo 'Configuring MinIO client...'
-        mc alias set minio http://minio-server:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}
+        mc alias set minio http://minio-server:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
 
-        echo 'Creating bucket: videos'
+        echo 'Ensuring bucket exists...'
         mc mb --ignore-existing minio/videos
 
         echo 'Setting bucket policy to allow public read for video playback...'
-        mc anonymous set download minio/videos
+        mc anonymous set download minio/videos || true
 
-        echo 'Configuring CORS for browser uploads...'
-        cat > /tmp/cors.json << 'CORSEOF'
-        {
-          "CorsRules": [
-            {
-              "AllowedHeaders": ["*"],
-              "AllowedMethods": ["GET", "HEAD", "PUT", "POST", "DELETE"],
-              "AllowedOrigins": ["*"],
-              "ExposeHeaders": ["ETag", "x-amz-meta-custom-header"],
-              "MaxAgeSeconds": 3600
-            }
-          ]
-        }
-        CORSEOF
-        mc cors set minio/videos /tmp/cors.json || echo 'CORS config skipped (may not be supported)'
-
-        echo 'Creating service user: cap'
-        mc admin user add minio cap $${CAP_AWS_SECRET_KEY} || true
+        echo 'Ensuring service user exists...'
+        mc admin user info minio cap >/dev/null 2>&1 || \
+        mc admin user add minio cap "$CAP_AWS_ACCESS_KEY" "$CAP_AWS_SECRET_KEY"
 
         echo 'Creating bucket access policy for service user...'
         cat > /tmp/cap-policy.json << 'EOF'
@@ -239,26 +228,31 @@ services:
                 "s3:GetObject",
                 "s3:PutObject",
                 "s3:DeleteObject",
-                "s3:ListBucket",
-                "s3:GetBucketLocation",
-                "s3:ListMultipartUploadParts",
                 "s3:AbortMultipartUpload",
-                "s3:CreateMultipartUpload"
+                "s3:ListMultipartUploadParts"
               ],
-              "Resource": [
-                "arn:aws:s3:::videos",
-                "arn:aws:s3:::videos/*"
-              ]
+              "Resource": "arn:aws:s3:::videos/*"
+            },
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:ListBucket",
+                "s3:GetBucketLocation"
+              ],
+              "Resource": "arn:aws:s3:::videos"
             }
           ]
         }
         EOF
-        mc admin policy create minio cap-policy /tmp/cap-policy.json || true
+
+        mc admin policy info minio cap-policy >/dev/null 2>&1 || \
+        mc admin policy create minio cap-policy /tmp/cap-policy.json
+
         mc admin policy attach minio cap-policy --user cap || true
 
         echo ''
         echo '=== MinIO Setup Complete ==='
-        mc admin user list minio
+        mc admin user info minio cap || true
         mc ls minio
     networks:
       local:

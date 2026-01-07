@@ -62,7 +62,7 @@ if ($Script) {
 # Interactive mode
 Write-Host ""
 Write-Host "===========================================" -ForegroundColor Green
-Write-Host " Cap Screen Recorder - Development Tools" -ForegroundColor Green
+Write-Host " Screen Recorder - Development Tools" -ForegroundColor Green
 Write-Host "===========================================" -ForegroundColor Green
 Write-Host ""
 Write-Host "Available scripts:"

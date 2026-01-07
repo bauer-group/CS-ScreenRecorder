@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-# Cap Screen Recorder - Secret Generator
+# Screen Recorder - Secret Generator
 # Generates secure random secrets for use in .env configuration
 #
 # Required secrets for Cap:
@@ -27,7 +27,7 @@ BLUE='\033[0;34m'
 NC='\033[0m'
 
 echo -e "${GREEN}========================================${NC}"
-echo -e "${GREEN} Cap Screen Recorder - Secret Generator${NC}"
+echo -e "${GREEN} Screen Recorder - Secret Generator${NC}"
 echo -e "${GREEN}========================================${NC}"
 echo ""
 

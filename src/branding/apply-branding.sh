@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-# Apply White-Label Branding to Cap Screen Recorder
+# Apply White-Label Branding to Screen Recorder
 # This script applies custom branding during Docker build
 #
 # Compatible with: Cap (Next.js frontend)

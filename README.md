@@ -1,4 +1,4 @@
-# Cap Screen Recorder - Self-Hosted [BAUER GROUP Edition]
+# Screen Recorder - Self-Hosted [BAUER GROUP Edition]
 
 > Docker-based self-hosting solution for [Cap](https://cap.so) - Beautiful screen recordings, owned by you.
 
@@ -194,7 +194,7 @@ SMTP_TLS=false
 SMTP_USER=user@example.com
 SMTP_PASSWORD=secret
 SMTP_FROM=no-reply@example.com
-SMTP_FROM_NAME=Cap Screen Recorder
+SMTP_FROM_NAME=Screen Recorder
 ```
 
 **Option 2: Resend (Cloud)**

@@ -1,5 +1,5 @@
 # =============================================================================
-# Development Tools Container for Cap Screen Recorder
+# Development Tools Container for Screen Recorder
 # All tools needed for branding asset generation and secret management
 # Using Ubuntu for better package compatibility (especially Inkscape)
 # =============================================================================

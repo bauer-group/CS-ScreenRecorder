@@ -1,6 +1,6 @@
 # syntax=docker.io/docker/dockerfile:1
 # =============================================================================
-# Cap Screen Recorder - BAUER GROUP Edition
+# Screen Recorder - BAUER GROUP Edition
 # Multi-stage build from source with Microsoft Entra ID support
 # =============================================================================
 #

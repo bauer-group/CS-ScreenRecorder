@@ -49,7 +49,7 @@ if errorlevel 1 (
 :run_container
 
 echo ===========================================
-echo  Cap Screen Recorder - Development Tools
+echo  Screen Recorder - Development Tools
 echo ===========================================
 echo.
 echo Available scripts:

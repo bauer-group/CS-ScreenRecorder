@@ -87,7 +87,7 @@ fi
 # Interactive mode
 echo ""
 echo -e "${GREEN}===========================================${NC}"
-echo -e "${GREEN} Cap Screen Recorder - Development Tools${NC}"
+echo -e "${GREEN} Screen Recorder - Development Tools${NC}"
 echo -e "${GREEN}===========================================${NC}"
 echo ""
 echo "Available scripts:"

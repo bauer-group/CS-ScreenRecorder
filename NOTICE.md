@@ -17,7 +17,7 @@ complete source code available to users. The source is available at:
 
 This project includes or depends on the following third-party software:
 
-## Cap Screen Recorder
+## Screen Recorder
 
 - **Project**: Cap
 - **Source**: <https://github.com/CapSoftware/Cap>

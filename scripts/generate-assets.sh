@@ -1,6 +1,6 @@
 #!/bin/bash
 ###############################################################################
-# Generate Branding Assets for Cap Screen Recorder
+# Generate Branding Assets for Screen Recorder
 #
 # This script generates assets specifically for Cap's expected file structure.
 #
