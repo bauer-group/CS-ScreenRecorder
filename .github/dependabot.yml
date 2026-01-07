@@ -1,7 +1,7 @@
 # =============================================================================
-# Dependabot Configuration - PDF-Toolbox
+# Dependabot Configuration
 # =============================================================================
-# Monitors Docker base images for updates (stirlingtools/stirling-pdf)
+# Monitors Docker base images for updates
 # Combined with docker-maintenance.yml workflow for auto-merge and release
 # =============================================================================
 

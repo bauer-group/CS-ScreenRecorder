@@ -1,0 +1,278 @@
+# =============================================================================
+# Cap Screen Recorder - Coolify PaaS Configuration
+# =============================================================================
+# Usage: Deploy via Coolify dashboard
+#
+# COOLIFY HOSTNAME MAPPING:
+#   - Cap Web: ${SERVICE_HOSTNAME} (e.g., screenrecorder.app.bauer-group.com) → Port 3000
+#   - MinIO S3: ${S3_HOSTNAME} (e.g., assets.screenrecorder.app.bauer-group.com) → Port 9000
+#   - MinIO Console: ${S3_CONSOLE_HOSTNAME} (e.g., assets-console.screenrecorder.app.bauer-group.com) → Port 9001
+#
+# Note: Coolify manages reverse proxy and SSL certificates automatically.
+# =============================================================================
+
+services:
+
+  # ---------------------------------------------------------------------------
+  # Cap Web Application
+  # ---------------------------------------------------------------------------
+  cap-web:
+    image: ghcr.io/bauer-group/cap-screen-recorder:${CAP_VERSION:-latest}
+    restart: unless-stopped
+    container_name: CAP_WEB
+    depends_on:
+      mysql-server:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+    environment:
+      - TZ=${TIME_ZONE:-Etc/UTC}
+
+      # -- Core Settings --
+      - NODE_ENV=${NODE_ENV:-production}
+      - WEB_URL=${WEB_URL}
+      - NEXTAUTH_URL=${WEB_URL}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+
+      # -- Database (static: cap/cap) --
+      - DATABASE_URL=mysql://cap:${DATABASE_PASSWORD}@mysql-server:3306/cap
+
+      # -- Encryption --
+      - DATABASE_ENCRYPTION_KEY=${DATABASE_ENCRYPTION_KEY:-}
+
+      # -- S3 Storage (static: bucket=videos, user=cap, region=global) --
+      - CAP_AWS_BUCKET=videos
+      - CAP_AWS_REGION=global
+      - CAP_AWS_ACCESS_KEY=cap
+      - CAP_AWS_SECRET_KEY=${CAP_AWS_SECRET_KEY}
+      - S3_PATH_STYLE=true
+      - S3_INTERNAL_ENDPOINT=http://minio-server:9000
+      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
+      - CAP_AWS_BUCKET_URL=${CAP_AWS_BUCKET_URL}
+
+      # -- Video Settings --
+      - CAP_VIDEOS_DEFAULT_PUBLIC=${CAP_VIDEOS_DEFAULT_PUBLIC:-true}
+      - CAP_ALLOWED_SIGNUP_DOMAINS=${CAP_ALLOWED_SIGNUP_DOMAINS:-}
+
+      # -- Email (Optional) --
+      - RESEND_API_KEY=${RESEND_API_KEY:-}
+      - RESEND_FROM_DOMAIN=${RESEND_FROM_DOMAIN:-}
+
+      # -- OAuth (Optional) --
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - WORKOS_CLIENT_ID=${WORKOS_CLIENT_ID:-}
+      - WORKOS_API_KEY=${WORKOS_API_KEY:-}
+
+      # -- AI Features (Optional) --
+      - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+
+      # -- Payments (Optional) --
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
+
+    expose:
+      - 3000/tcp
+    networks:
+      local:
+
+
+  # ---------------------------------------------------------------------------
+  # MySQL Database Server
+  # ---------------------------------------------------------------------------
+  # Tuned for: 4-8 GB RAM, SSD/NVMe storage
+  mysql-server:
+    image: mysql:${MYSQL_VERSION:-8.0}
+    restart: unless-stopped
+    container_name: CAP_MYSQL
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --max_connections=${DATABASE_POOL_SIZE:-100}
+      --innodb_buffer_pool_size=1G
+      --innodb_log_file_size=256M
+      --innodb_flush_log_at_trx_commit=2
+      --innodb_flush_method=O_DIRECT
+      --innodb_io_capacity=2000
+      --innodb_io_capacity_max=4000
+      --innodb_read_io_threads=8
+      --innodb_write_io_threads=8
+      --innodb_file_per_table=1
+      --innodb_open_files=4000
+      --table_open_cache=4000
+      --table_definition_cache=2000
+      --thread_cache_size=50
+      --sort_buffer_size=4M
+      --read_buffer_size=2M
+      --read_rnd_buffer_size=4M
+      --join_buffer_size=4M
+      --tmp_table_size=64M
+      --max_heap_table_size=64M
+      --query_cache_type=0
+      --performance_schema=OFF
+      --skip-name-resolve
+      --log_error_verbosity=2
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DATABASE_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    environment:
+      - TZ=${TIME_ZONE:-Etc/UTC}
+      - MYSQL_DATABASE=cap
+      - MYSQL_USER=cap
+      - MYSQL_PASSWORD=${DATABASE_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${DATABASE_PASSWORD}
+    expose:
+      - 3306/tcp
+    volumes:
+      - 'mysql-data:/var/lib/mysql'
+    networks:
+      local:
+
+
+  # ---------------------------------------------------------------------------
+  # MinIO Object Storage Server
+  # ---------------------------------------------------------------------------
+  minio-server:
+    image: quay.io/minio/minio:${MINIO_VERSION:-latest}
+    restart: unless-stopped
+    container_name: CAP_MINIO
+    hostname: minio-server
+    command: server --address ":9000" --console-address ":9001" /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 10s
+      retries: 4
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    environment:
+      - TZ=${TIME_ZONE:-Etc/UTC}
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+    expose:
+      - 9000/tcp
+      - 9001/tcp
+    volumes:
+      - 'minio-data:/data'
+    networks:
+      local:
+
+
+  # ---------------------------------------------------------------------------
+  # MinIO Setup (creates bucket and service user on first start)
+  # ---------------------------------------------------------------------------
+  minio-setup:
+    image: quay.io/minio/mc:latest
+    container_name: CAP_MINIO_SETUP
+    depends_on:
+      minio-server:
+        condition: service_healthy
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - CAP_AWS_SECRET_KEY=${CAP_AWS_SECRET_KEY}
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo '=== MinIO Setup for Cap Screen Recorder ==='
+        echo 'Waiting for MinIO to be ready...'
+        sleep 5
+
+        echo 'Configuring MinIO client...'
+        mc alias set minio http://minio-server:9000 $${MINIO_ROOT_USER} $${MINIO_ROOT_PASSWORD}
+
+        echo 'Creating bucket: videos'
+        mc mb --ignore-existing minio/videos
+
+        echo 'Setting bucket policy to allow public read for video playback...'
+        mc anonymous set download minio/videos
+
+        echo 'Creating service user: cap'
+        mc admin user add minio cap $${CAP_AWS_SECRET_KEY} || true
+
+        echo 'Creating bucket access policy for service user...'
+        cat > /tmp/cap-policy.json << 'EOF'
+        {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": [
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:DeleteObject",
+                "s3:ListBucket",
+                "s3:GetBucketLocation",
+                "s3:ListMultipartUploadParts",
+                "s3:AbortMultipartUpload",
+                "s3:CreateMultipartUpload",
+                "s3:PutObjectAcl"
+              ],
+              "Resource": [
+                "arn:aws:s3:::videos",
+                "arn:aws:s3:::videos/*"
+              ]
+            }
+          ]
+        }
+        EOF
+        mc admin policy create minio cap-policy /tmp/cap-policy.json || true
+        mc admin policy attach minio cap-policy --user cap || true
+
+        echo ''
+        echo '=== MinIO Setup Complete ==='
+        mc admin user list minio
+        mc ls minio
+    networks:
+      local:
+
+
+# =============================================================================
+# Volumes
+# =============================================================================
+volumes:
+  # MySQL database storage
+  mysql-data:
+    driver: local
+    name: cap-mysql-data
+
+  # MinIO object storage
+  minio-data:
+    driver: local
+    name: cap-minio-data
+
+
+# =============================================================================
+# Networks
+# =============================================================================
+networks:
+  # Internal network for service communication
+  local:
+    driver: bridge
+    name: CAP_NETWORK
+    enable_ipv6: true

@@ -8,7 +8,6 @@
 
 # Documentation
 *.md
-*.txt
 LICENSE
 
 # IDE
@@ -16,8 +15,7 @@ LICENSE
 .idea
 .claude
 
-# Docker
-Dockerfile
+# Docker compose files (not needed in image, only Dockerfile)
 docker-compose*.yml
 .docker
 
@@ -26,4 +24,18 @@ docker-compose*.yml
 Thumbs.db
 
 # Deployment configs (not needed in image)
-.env.example
+.env
+.env.*
+
+# Tools container (separate image)
+tools/
+
+# Scripts (not needed in final image)
+scripts/
+
+# Source branding files (only assets folder needed)
+src/branding/*.eps
+src/branding/*.svg
+src/branding/*.png
+src/branding/branding.env
+!src/branding/assets/

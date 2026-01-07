@@ -39,34 +39,31 @@ jobs:
       compose-files: '["docker-compose.coolify.yml", "docker-compose.traefik.yml", "docker-compose.development.yml"]'
       env-template: |
         {
-          "STACK_NAME": "ci_test",
-          "STIRLING_VERSION": "latest-fat",
+          "STACK_NAME": "cap_ci_test",
+          "CAP_VERSION": "latest",
+          "MYSQL_VERSION": "8.0",
+          "MINIO_VERSION": "latest",
           "TIME_ZONE": "UTC",
           "PROXY_NETWORK": "EDGEPROXY",
-          "PRIVATESUBNET": "253",
-          "SERVICE_HOSTNAME": "pdf.example.com",
-          "EXPOSED_APP_PORT": "8080",
-          "SYSTEM_DEFAULT_LOCALE": "en-GB",
-          "SYSTEM_MAX_FILE_SIZE": "2000",
-          "SYSTEM_ROOT_URI_PATH": "/",
-          "SYSTEM_CONNECTION_TIMEOUT_MINUTES": "5",
-          "UI_APPNAMENAVBAR": "PDF Toolbox [CI Test]",
-          "UI_LOGOSTYLE": "modern",
-          "SYSTEM_GOOGLE_VISIBILITY": "false",
-          "SYSTEM_SHOW_UPDATE": "false",
-          "SYSTEM_SHOW_UPDATE_ONLY_ADMIN": "true",
-          "SECURITY_ENABLE_LOGIN": "true",
-          "SECURITY_INITIAL_LOGIN_USERNAME": "admin",
-          "SECURITY_INITIAL_LOGIN_PASSWORD": "ci_test_password",
-          "SYSTEM_SERVERCERTIFICATE_ORGANIZATIONNAME": "CI Test Org",
-          "KEYSTORE_PASSWORD": "",
-          "KEYSTORE_P12_BASE64": "",
-          "MAIL_ENABLED": "false",
-          "MAIL_HOST": "",
-          "MAIL_PORT": "587",
-          "MAIL_USERNAME": "",
-          "MAIL_PASSWORD": "",
-          "MAIL_FROM": ""
+          "SERVICE_HOSTNAME": "cap.example.com",
+          "S3_HOSTNAME": "assets.cap.example.com",
+          "S3_CONSOLE_HOSTNAME": "assets-console.cap.example.com",
+          "EXPOSED_APP_PORT": "3000",
+          "EXPOSED_MYSQL_PORT": "3306",
+          "EXPOSED_MINIO_API_PORT": "9000",
+          "EXPOSED_MINIO_CONSOLE_PORT": "9001",
+          "WEB_URL": "https://cap.example.com",
+          "NODE_ENV": "production",
+          "NEXTAUTH_SECRET": "ci-test-secret-32-bytes-long-xxx",
+          "DATABASE_ENCRYPTION_KEY": "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+          "DATABASE_PASSWORD": "ci-test-password",
+          "DATABASE_POOL_SIZE": "20",
+          "MINIO_ROOT_USER": "admin",
+          "MINIO_ROOT_PASSWORD": "ci-test-minio-password",
+          "CAP_AWS_SECRET_KEY": "ci-test-s3-secret-key-40-characters-xx",
+          "S3_PUBLIC_ENDPOINT": "https://assets.cap.example.com",
+          "CAP_AWS_BUCKET_URL": "https://assets.cap.example.com/videos",
+          "CAP_VIDEOS_DEFAULT_PUBLIC": "true"
         }
 
   validate-scripts:
@@ -106,8 +103,8 @@ jobs:
     with:
       deploy-environment: 'production'
       publish-to: 'both'
-      ghcr-image-name: 'bauer-group/CS-PDF-Toolbox/pdf-toolbox'
-      docker-image-name: 'bauergroup/pdf-toolbox'
+      ghcr-image-name: 'bauer-group/CS-ScreenRecording/screen-recording'
+      docker-image-name: 'bauergroup/screen-recording'
 
       release-version: ${{ needs.release.outputs.version }}
 
@@ -137,7 +134,7 @@ jobs:
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       publish-to: 'ghcr'
-      ghcr-image-name: 'bauer-group/CS-PDF-Toolbox/pdf-toolbox'
+      ghcr-image-name: 'bauer-group/CS-ScreenRecording/screen-recording'
 
       auto-tags: true
       dockerfile-path: './src/Dockerfile'
