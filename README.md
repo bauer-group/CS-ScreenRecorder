@@ -7,6 +7,8 @@ This repository provides production-ready Docker Compose configurations for self
 ## Features
 
 - **Custom Branding** - BAUER GROUP logos and styling
+- **Microsoft Entra ID** - Azure AD OAuth (single/multi-tenant)
+- **SMTP Email** - Use your own mail server (no cloud dependency)
 - **SSD-optimized MySQL** - InnoDB tuning for NVMe/SSD storage
 - **MinIO with Init Container** - Automatic bucket and user setup
 - **Three Deployment Options** - Development, Traefik (Production), Coolify (PaaS)
@@ -101,6 +103,9 @@ CS-ScreenRecorder/
 │   └── generate-assets.sh        # Logo/favicon generator
 ├── src/
 │   ├── Dockerfile                # Custom Cap image
+│   ├── patches/                  # Source code patches
+│   │   ├── 001-microsoft-entra-id.sh
+│   │   └── 002-smtp-email.sh
 │   └── branding/                 # Logo sources
 │       ├── branding.env          # Branding config
 │       └── logo-source-*.{eps,svg,png}
@@ -112,6 +117,7 @@ CS-ScreenRecorder/
 ├── docker-compose.traefik.yml
 ├── docker-compose.coolify.yml
 ├── .env.example
+├── NOTICE.md                     # Third-party licenses
 └── README.md
 ```
 
@@ -141,7 +147,9 @@ CS-ScreenRecorder/
 
 | Feature | Variables |
 |---------|-----------|
-| **Email** | `RESEND_API_KEY`, `RESEND_FROM_DOMAIN` |
+| **SMTP Email** | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD`, `SMTP_FROM` |
+| **Resend Email** | `RESEND_API_KEY`, `RESEND_FROM_DOMAIN` |
+| **Microsoft Entra ID** | `AZURE_AD_CLIENT_ID`, `AZURE_AD_CLIENT_SECRET`, `AZURE_AD_TENANT_ID` |
 | **Google OAuth** | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` |
 | **Enterprise SSO** | `WORKOS_CLIENT_ID`, `WORKOS_API_KEY` |
 | **AI Transcription** | `DEEPGRAM_API_KEY` |
@@ -177,12 +185,40 @@ If email is not configured, login links appear in container logs:
 docker logs ${STACK_NAME}_APP
 ```
 
-To enable email, sign up at [Resend](https://resend.com):
+**Option 1: SMTP (Recommended for self-hosted)**
+
+```bash
+SMTP_HOST=mail.example.com
+SMTP_PORT=587
+SMTP_TLS=false
+SMTP_USER=user@example.com
+SMTP_PASSWORD=secret
+SMTP_FROM=no-reply@example.com
+SMTP_FROM_NAME=Cap Screen Recorder
+```
+
+**Option 2: Resend (Cloud)**
 
 ```bash
 RESEND_API_KEY=re_xxxxx
 RESEND_FROM_DOMAIN=mail.bauer-group.com
 ```
+
+Priority: SMTP > Resend > Console Log
+
+## Microsoft Entra ID (Azure AD)
+
+1. Register app at [Entra Portal](https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade)
+2. Set redirect URI: `https://${SERVICE_HOSTNAME}/api/auth/callback/azure-ad`
+3. Configure environment:
+
+```bash
+AZURE_AD_CLIENT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+AZURE_AD_CLIENT_SECRET=your-client-secret
+AZURE_AD_TENANT_ID=your-tenant-id  # Leave empty for multi-tenant
+```
+
+See [.env.example](.env.example) for detailed setup instructions.
 
 ## Desktop App
 
