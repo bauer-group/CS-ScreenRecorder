@@ -52,7 +52,7 @@ services:
       # -- Encryption --
       - DATABASE_ENCRYPTION_KEY=${DATABASE_ENCRYPTION_KEY:-}
 
-      # -- S3 Storage (static: bucket=videos, user=cap, region=global) --
+      # -- S3 Storage (static: bucket=videos, user=cap) --
       - CAP_AWS_BUCKET=videos
       - CAP_AWS_REGION=global
       - CAP_AWS_ACCESS_KEY=cap
@@ -310,6 +310,22 @@ services:
         EOF
         mc anonymous set-json /tmp/public-read-policy.json minio/videos
 
+        echo 'Configuring CORS for browser uploads...'
+        cat > /tmp/cors.json << 'CORSEOF'
+        {
+          "CorsRules": [
+            {
+              "AllowedHeaders": ["*"],
+              "AllowedMethods": ["GET", "HEAD", "PUT", "POST", "DELETE"],
+              "AllowedOrigins": ["*"],
+              "ExposeHeaders": ["ETag", "x-amz-meta-custom-header"],
+              "MaxAgeSeconds": 3600
+            }
+          ]
+        }
+        CORSEOF
+        mc cors set minio/videos /tmp/cors.json || echo 'CORS config skipped (may not be supported)'
+
         echo 'Creating service user: cap'
         mc admin user add minio cap $${CAP_AWS_SECRET_KEY} || true
 
@@ -328,8 +344,7 @@ services:
                 "s3:GetBucketLocation",
                 "s3:ListMultipartUploadParts",
                 "s3:AbortMultipartUpload",
-                "s3:CreateMultipartUpload",
-                "s3:PutObjectAcl"
+                "s3:CreateMultipartUpload"
               ],
               "Resource": [
                 "arn:aws:s3:::videos",
