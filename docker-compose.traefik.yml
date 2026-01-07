@@ -18,7 +18,7 @@ services:
   # Cap Web Application
   # ---------------------------------------------------------------------------
   cap-web:    
-    image: ghcr.io/bauer-group/cs-screenrecording/screen-recording:${CAP_VERSION:-latest}
+    image: ghcr.io/bauer-group/cs-screenrecorder/screen-recorder:latest
     restart: unless-stopped
     container_name: ${STACK_NAME:-SCREENRECORDER}_APP
     depends_on:
@@ -66,11 +66,21 @@ services:
       - CAP_VIDEOS_DEFAULT_PUBLIC=${CAP_VIDEOS_DEFAULT_PUBLIC:-true}
       - CAP_ALLOWED_SIGNUP_DOMAINS=${CAP_ALLOWED_SIGNUP_DOMAINS:-}
 
-      # -- Email (Optional) --
+      # -- Email (Optional: SMTP or Resend) --
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_TLS=${SMTP_TLS:-false}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - SMTP_FROM=${SMTP_FROM:-}
+      - SMTP_FROM_NAME=${SMTP_FROM_NAME:-}
       - RESEND_API_KEY=${RESEND_API_KEY:-}
       - RESEND_FROM_DOMAIN=${RESEND_FROM_DOMAIN:-}
 
       # -- OAuth (Optional) --
+      - AZURE_AD_CLIENT_ID=${AZURE_AD_CLIENT_ID:-}
+      - AZURE_AD_CLIENT_SECRET=${AZURE_AD_CLIENT_SECRET:-}
+      - AZURE_AD_TENANT_ID=${AZURE_AD_TENANT_ID:-}
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
       - WORKOS_CLIENT_ID=${WORKOS_CLIENT_ID:-}

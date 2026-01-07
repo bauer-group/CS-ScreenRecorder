@@ -103,8 +103,8 @@ jobs:
     with:
       deploy-environment: 'production'
       publish-to: 'both'
-      ghcr-image-name: 'bauer-group/CS-ScreenRecording/screen-recording'
-      docker-image-name: 'bauergroup/screen-recording'
+      ghcr-image-name: 'bauer-group/CS-ScreenRecorder/screen-recorder'
+      docker-image-name: 'bauergroup/screen-recorder'
 
       release-version: ${{ needs.release.outputs.version }}
 
@@ -134,7 +134,7 @@ jobs:
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       publish-to: 'ghcr'
-      ghcr-image-name: 'bauer-group/CS-ScreenRecording/screen-recording'
+      ghcr-image-name: 'bauer-group/cs-screenrecorder/screen-recorder'
 
       auto-tags: true
       dockerfile-path: './src/Dockerfile'

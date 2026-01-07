@@ -20,8 +20,8 @@ This repository provides production-ready Docker Compose configurations for self
 
 ```bash
 # Clone the repository
-git clone https://github.com/bauer-group/CS-ScreenRecording.git
-cd CS-ScreenRecording
+git clone https://github.com/bauer-group/CS-ScreenRecorder.git
+cd CS-ScreenRecorder
 
 # Generate secrets and create .env file
 ./scripts/generate-secrets.sh
@@ -91,7 +91,7 @@ docker compose -f docker-compose.traefik.yml up -d
 ## Project Structure
 
 ```
-CS-ScreenRecording/
+CS-ScreenRecorder/
 ├── .github/
 │   ├── workflows/
 │   │   └── docker-release.yml    # CI/CD pipeline
