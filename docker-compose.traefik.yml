@@ -235,10 +235,14 @@ services:
     labels:
       - "traefik.enable=true"
 
+      # HTTP to HTTPS redirect middleware (defined here for MinIO independence)
+      - "traefik.http.middlewares.${STACK_NAME:-SCREENRECORDER}-minio-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.${STACK_NAME:-SCREENRECORDER}-minio-redirect.redirectscheme.permanent=true"
+
       # MinIO API (S3)
       - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-http.rule=Host(`${S3_HOSTNAME}`)"
       - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-http.entrypoints=web"
-      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-http.middlewares=${STACK_NAME:-SCREENRECORDER}-redirect-to-secure"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-http.middlewares=${STACK_NAME:-SCREENRECORDER}-minio-redirect"
 
       - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio.rule=Host(`${S3_HOSTNAME}`)"
       - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio.entrypoints=web-secure"
@@ -251,7 +255,7 @@ services:
       # MinIO Console
       - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console-http.rule=Host(`${S3_CONSOLE_HOSTNAME}`)"
       - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console-http.entrypoints=web"
-      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console-http.middlewares=${STACK_NAME:-SCREENRECORDER}-redirect-to-secure"
+      - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console-http.middlewares=${STACK_NAME:-SCREENRECORDER}-minio-redirect"
 
       - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console.rule=Host(`${S3_CONSOLE_HOSTNAME}`)"
       - "traefik.http.routers.${STACK_NAME:-SCREENRECORDER}-minio-console.entrypoints=web-secure"
