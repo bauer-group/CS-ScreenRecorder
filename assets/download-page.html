@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Screen Recorder Download - BAUER GROUP</title>
-    <meta name="description" content="Download Screen Recorder for Windows, macOS, and Linux">
+    <meta name="description" content="Download Screen Recorder for Windows and macOS">
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <style>
         :root {
@@ -410,16 +410,13 @@
                         </div>
                         <h3>Windows</h3>
                         <p class="version" data-i18n="windows.version">Windows 10/11 (64-bit)</p>
-                        <a href="Cap-Setup-x64.exe" class="download-btn">
+                        <a href="cap-windows-x64.exe" class="download-btn">
                             <svg viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-6 4h12v-2H6v2z"/>
                             </svg>
                             <span data-i18n="download.button">Download</span> (.exe)
                         </a>
-                        <p class="file-info">Cap-Setup-x64.exe</p>
-                        <div class="alt-downloads">
-                            <a href="Cap-Setup-arm64.exe" data-i18n="windows.arm">ARM64 Version</a>
-                        </div>
+                        <p class="file-info">cap-windows-x64.exe</p>
                     </div>
 
                     <!-- macOS -->
@@ -431,38 +428,15 @@
                         </div>
                         <h3>macOS</h3>
                         <p class="version" data-i18n="macos.version">macOS 11+ (Big Sur or newer)</p>
-                        <a href="Cap-Setup-universal.dmg" class="download-btn">
+                        <a href="cap-macos-arm64.dmg" class="download-btn">
                             <svg viewBox="0 0 24 24" fill="currentColor">
                                 <path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-6 4h12v-2H6v2z"/>
                             </svg>
                             <span data-i18n="download.button">Download</span> (.dmg)
                         </a>
-                        <p class="file-info">Cap-Setup-universal.dmg (Universal)</p>
+                        <p class="file-info">cap-macos-arm64.dmg (Apple Silicon)</p>
                         <div class="alt-downloads">
-                            <a href="Cap-Setup-x64.dmg">Intel (x64)</a>
-                            <a href="Cap-Setup-arm64.dmg">Apple Silicon</a>
-                        </div>
-                    </div>
-
-                    <!-- Linux -->
-                    <div class="download-card" data-os="linux">
-                        <div class="os-icon">
-                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139z"/>
-                            </svg>
-                        </div>
-                        <h3>Linux</h3>
-                        <p class="version">Ubuntu, Debian, Fedora</p>
-                        <a href="Cap-Setup-x64.AppImage" class="download-btn">
-                            <svg viewBox="0 0 24 24" fill="currentColor">
-                                <path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-6 4h12v-2H6v2z"/>
-                            </svg>
-                            <span data-i18n="download.button">Download</span> (.AppImage)
-                        </a>
-                        <p class="file-info">Cap-Setup-x64.AppImage</p>
-                        <div class="alt-downloads">
-                            <a href="Cap-Setup-x64.deb">.deb (Debian/Ubuntu)</a>
-                            <a href="Cap-Setup-x64.rpm">.rpm (Fedora/RHEL)</a>
+                            <a href="cap-macos-x64.dmg">Intel (x64)</a>
                         </div>
                     </div>
                 </div>
@@ -508,9 +482,9 @@
 
     <footer>
         <div class="container">
-            <p data-i18n="footer.copyright">&copy; 2024 BAUER GROUP. Based on <a href="https://cap.so" target="_blank">Cap</a> - Open Source Screen Recording.</p>
+            <p data-i18n="footer.copyright">&copy; BAUER GROUP</p>
             <p style="margin-top: 8px;">
-                <a href="https://go.bauer-group.com/screenrecorder" data-i18n="footer.info">More information</a> |
+                <a href="https://go.bauer-group.com/screenrecorder" data-i18n="footer.info">More information</a> ·
                 <a href="https://go.bauer-group.com/screenrecorder-privacy" data-i18n="footer.privacy">Privacy Policy</a>
             </p>
         </div>
@@ -539,7 +513,7 @@
                 "features.formats.desc": "Export to MP4, WebM, GIF and more.",
                 "features.share.title": "Quick sharing",
                 "features.share.desc": "Share links directly after recording.",
-                "footer.copyright": "© 2024 BAUER GROUP. Based on <a href='https://cap.so' target='_blank'>Cap</a> - Open Source Screen Recording.",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "More information",
                 "footer.privacy": "Privacy Policy",
                 "recommended": "Recommended"
@@ -562,7 +536,7 @@
                 "features.formats.desc": "Exportieren Sie in MP4, WebM, GIF und mehr.",
                 "features.share.title": "Schnell teilen",
                 "features.share.desc": "Teilen Sie Links direkt nach der Aufnahme.",
-                "footer.copyright": "© 2024 BAUER GROUP. Basierend auf <a href='https://cap.so' target='_blank'>Cap</a> - Open Source Screen Recording.",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "Weitere Informationen",
                 "footer.privacy": "Datenschutz",
                 "recommended": "Empfohlen"
@@ -585,7 +559,7 @@
                 "features.formats.desc": "ექსპორტი MP4, WebM, GIF და სხვა ფორმატებში.",
                 "features.share.title": "სწრაფი გაზიარება",
                 "features.share.desc": "გააზიარეთ ბმულები ჩაწერის შემდეგ.",
-                "footer.copyright": "© 2024 BAUER GROUP. დაფუძნებულია <a href='https://cap.so' target='_blank'>Cap</a>-ზე.",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "მეტი ინფორმაცია",
                 "footer.privacy": "კონფიდენციალურობა",
                 "recommended": "რეკომენდებული"
@@ -608,7 +582,7 @@
                 "features.formats.desc": "ส่งออกเป็น MP4, WebM, GIF และอื่นๆ",
                 "features.share.title": "แชร์ได้รวดเร็ว",
                 "features.share.desc": "แชร์ลิงก์ได้ทันทีหลังบันทึก",
-                "footer.copyright": "© 2024 BAUER GROUP. สร้างจาก <a href='https://cap.so' target='_blank'>Cap</a>",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "ข้อมูลเพิ่มเติม",
                 "footer.privacy": "นโยบายความเป็นส่วนตัว",
                 "recommended": "แนะนำ"
@@ -631,7 +605,7 @@
                 "features.formats.desc": "导出为 MP4、WebM、GIF 等格式。",
                 "features.share.title": "快速分享",
                 "features.share.desc": "录制后立即分享链接。",
-                "footer.copyright": "© 2024 BAUER GROUP。基于 <a href='https://cap.so' target='_blank'>Cap</a> 开源屏幕录制。",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "更多信息",
                 "footer.privacy": "隐私政策",
                 "recommended": "推荐"
@@ -654,7 +628,7 @@
                 "features.formats.desc": "Экспорт в MP4, WebM, GIF и другие форматы.",
                 "features.share.title": "Быстрый обмен",
                 "features.share.desc": "Делитесь ссылками сразу после записи.",
-                "footer.copyright": "© 2024 BAUER GROUP. На основе <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "Подробнее",
                 "footer.privacy": "Политика конфиденциальности",
                 "recommended": "Рекомендуется"
@@ -677,7 +651,7 @@
                 "features.formats.desc": "Xuất ra MP4, WebM, GIF và nhiều định dạng khác.",
                 "features.share.title": "Chia sẻ nhanh",
                 "features.share.desc": "Chia sẻ liên kết ngay sau khi ghi.",
-                "footer.copyright": "© 2024 BAUER GROUP. Dựa trên <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "Thông tin thêm",
                 "footer.privacy": "Chính sách bảo mật",
                 "recommended": "Đề xuất"
@@ -700,7 +674,7 @@
                 "features.formats.desc": "Eksport ke MP4, WebM, GIF dan banyak lagi.",
                 "features.share.title": "Kongsi pantas",
                 "features.share.desc": "Kongsi pautan terus selepas merakam.",
-                "footer.copyright": "© 2024 BAUER GROUP. Berdasarkan <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "Maklumat lanjut",
                 "footer.privacy": "Dasar Privasi",
                 "recommended": "Disyorkan"
@@ -723,7 +697,7 @@
                 "features.formats.desc": "Exportez en MP4, WebM, GIF et plus encore.",
                 "features.share.title": "Partage rapide",
                 "features.share.desc": "Partagez des liens directement après l'enregistrement.",
-                "footer.copyright": "© 2024 BAUER GROUP. Basé sur <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "Plus d'informations",
                 "footer.privacy": "Politique de confidentialité",
                 "recommended": "Recommandé"
@@ -746,7 +720,7 @@
                 "features.formats.desc": "Exporta a MP4, WebM, GIF y más.",
                 "features.share.title": "Compartir rápido",
                 "features.share.desc": "Comparte enlaces directamente después de grabar.",
-                "footer.copyright": "© 2024 BAUER GROUP. Basado en <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "Más información",
                 "footer.privacy": "Política de privacidad",
                 "recommended": "Recomendado"
@@ -769,7 +743,7 @@
                 "features.formats.desc": "MP4、WebM、GIFなどにエクスポート。",
                 "features.share.title": "すばやく共有",
                 "features.share.desc": "録画後すぐにリンクを共有。",
-                "footer.copyright": "© 2024 BAUER GROUP. <a href='https://cap.so' target='_blank'>Cap</a>をベースに開発。",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "詳細情報",
                 "footer.privacy": "プライバシーポリシー",
                 "recommended": "おすすめ"
@@ -792,7 +766,7 @@
                 "features.formats.desc": "MP4, WebM, GIF 등으로 내보내기.",
                 "features.share.title": "빠른 공유",
                 "features.share.desc": "녹화 후 바로 링크를 공유하세요.",
-                "footer.copyright": "© 2024 BAUER GROUP. <a href='https://cap.so' target='_blank'>Cap</a> 기반.",
+                "footer.copyright": "© BAUER GROUP",
                 "footer.info": "자세한 정보",
                 "footer.privacy": "개인정보 보호정책",
                 "recommended": "추천"
@@ -843,7 +817,12 @@
         function initLanguageSelector() {
             const dropdown = document.getElementById('lang-dropdown');
 
-            Object.keys(translations).forEach(lang => {
+            // Sort languages alphabetically by name
+            const sortedLangs = Object.keys(translations).sort((a, b) =>
+                translations[a].name.localeCompare(translations[b].name)
+            );
+
+            sortedLangs.forEach(lang => {
                 const option = document.createElement('div');
                 option.className = 'lang-option';
                 option.dataset.lang = lang;

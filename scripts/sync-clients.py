@@ -7,20 +7,21 @@ This script downloads the official Cap client installers from GitHub releases
 and uploads them to your MinIO bucket for local distribution.
 
 Features:
-- Fetches latest release from Cap GitHub repository
-- Downloads all platform installers (Windows, macOS, Linux)
-- Uploads to MinIO with standardized filenames
+- Fetches release from Cap GitHub repository (uses CAP_VERSION from .env)
+- Supports both GitHub assets and CrabNebula CDN downloads
+- Downloads all available platform installers (Windows, macOS, Linux)
+- Uploads to MinIO with standardized lowercase filenames
 - Shows download progress
 
 Usage:
     python3 sync-clients.py [--version VERSION]
 
 Arguments:
-    --version VERSION  Specific version to download (e.g., cap-v0.3.83)
-                       If not specified, downloads the latest release
+    --version VERSION  Specific version tag (e.g., cap-v0.4.1)
+                       If not specified, uses CAP_VERSION from .env
 
 Environment Variables (from .env):
-    CAP_VERSION          - Default version if --version not specified
+    CAP_VERSION          - Version to sync (should match your server!)
     S3_HOSTNAME          - MinIO hostname
     MINIO_ROOT_USER      - MinIO admin username
     MINIO_ROOT_PASSWORD  - MinIO admin password
@@ -31,6 +32,7 @@ Run from tools container:
 
 import os
 import sys
+import re
 import argparse
 import tempfile
 import shutil
@@ -61,23 +63,39 @@ BUCKET_NAME = "clients"
 GITHUB_REPO = "CapSoftware/Cap"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 
-# Mapping of GitHub release asset patterns to our standardized filenames
+# =============================================================================
+# Asset mappings for GitHub release assets (older releases)
 # Format: (pattern_in_name, target_filename, content_type)
-ASSET_MAPPINGS = [
+# =============================================================================
+GITHUB_ASSET_MAPPINGS = [
     # Windows
-    ("_x64-setup.exe", "Cap-Setup-x64.exe", "application/octet-stream"),
-    ("_x64_en-US.msi", "Cap-Setup-x64.msi", "application/octet-stream"),
-    ("_arm64-setup.exe", "Cap-Setup-arm64.exe", "application/octet-stream"),
+    ("_x64-setup.exe", "cap-windows-x64.exe", "application/octet-stream"),
+    ("_x64_en-US.msi", "cap-windows-x64.msi", "application/octet-stream"),
+    ("_arm64-setup.exe", "cap-windows-arm64.exe", "application/octet-stream"),
 
     # macOS
-    ("_universal.dmg", "Cap-Setup-universal.dmg", "application/octet-stream"),
-    ("_x64.dmg", "Cap-Setup-x64.dmg", "application/octet-stream"),
-    ("_aarch64.dmg", "Cap-Setup-arm64.dmg", "application/octet-stream"),
+    ("_universal.dmg", "cap-macos-universal.dmg", "application/octet-stream"),
+    ("_x64.dmg", "cap-macos-x64.dmg", "application/octet-stream"),
+    ("_aarch64.dmg", "cap-macos-arm64.dmg", "application/octet-stream"),
 
     # Linux
-    ("_amd64.AppImage", "Cap-Setup-x64.AppImage", "application/octet-stream"),
-    ("_amd64.deb", "Cap-Setup-x64.deb", "application/vnd.debian.binary-package"),
-    ("_x86_64.rpm", "Cap-Setup-x64.rpm", "application/x-rpm"),
+    ("_amd64.AppImage", "cap-linux-x64.AppImage", "application/octet-stream"),
+    ("_amd64.deb", "cap-linux-x64.deb", "application/vnd.debian.binary-package"),
+    ("_x86_64.rpm", "cap-linux-x64.rpm", "application/x-rpm"),
+]
+
+# =============================================================================
+# CrabNebula CDN mappings (newer releases since ~v0.3.x)
+# Maps markdown link text patterns to target filenames
+# =============================================================================
+CRABNEBULA_MAPPINGS = [
+    # Pattern in release body -> (target_filename, content_type, file_extension)
+    (r"macOS.*Apple Silicon", "cap-macos-arm64.dmg", "application/octet-stream", ".dmg"),
+    (r"macOS.*Intel", "cap-macos-x64.dmg", "application/octet-stream", ".dmg"),
+    (r"Windows", "cap-windows-x64.exe", "application/octet-stream", ".exe"),
+    # Linux (if available in future)
+    (r"Linux.*AppImage", "cap-linux-x64.AppImage", "application/octet-stream", ".AppImage"),
+    (r"Linux.*deb", "cap-linux-x64.deb", "application/vnd.debian.binary-package", ".deb"),
 ]
 
 
@@ -146,17 +164,61 @@ def get_release_by_tag(tag: str):
 
 
 def find_matching_asset(assets: list, pattern: str):
-    """Find an asset matching the given pattern."""
+    """Find a GitHub asset matching the given pattern."""
     for asset in assets:
         if pattern in asset['name']:
             return asset
     return None
 
 
+def parse_crabnebula_downloads(release_body: str) -> list:
+    """
+    Parse release body for CrabNebula CDN download links.
+
+    Returns list of tuples: (platform_text, url, target_filename, content_type)
+    """
+    downloads = []
+
+    if not release_body:
+        return downloads
+
+    # Find all markdown links with cdn.crabnebula.app
+    # Pattern: [text](url) or **text**: url
+    patterns = [
+        # Markdown link: [macOS (Apple Silicon)](https://cdn.crabnebula.app/...)
+        r'\[([^\]]+)\]\((https://cdn\.crabnebula\.app/[^)]+)\)',
+        # Bold text with URL: **macOS (Apple Silicon)**: https://cdn.crabnebula.app/...
+        r'\*\*([^*]+)\*\*[:\s]+(https://cdn\.crabnebula\.app/\S+)',
+        # Plain text with URL: - macOS (Apple Silicon): https://cdn.crabnebula.app/...
+        r'-\s*([^:]+):\s*(https://cdn\.crabnebula\.app/\S+)',
+    ]
+
+    found_urls = {}  # Deduplicate by URL
+
+    for pattern in patterns:
+        matches = re.findall(pattern, release_body, re.IGNORECASE)
+        for platform_text, url in matches:
+            if url not in found_urls:
+                found_urls[url] = platform_text.strip()
+
+    # Map found URLs to our target filenames
+    for url, platform_text in found_urls.items():
+        for pattern, target_name, content_type, ext in CRABNEBULA_MAPPINGS:
+            if re.search(pattern, platform_text, re.IGNORECASE):
+                downloads.append((platform_text, url, target_name, content_type))
+                break
+        else:
+            # Unknown platform - use generic name based on URL
+            console.print(f"[yellow]![/yellow] Unknown platform: {platform_text}")
+
+    return downloads
+
+
 def download_file(url: str, dest_path: Path, progress: Progress, task_id) -> bool:
     """Download a file with progress tracking."""
     try:
-        response = requests.get(url, stream=True)
+        # Follow redirects and get final response
+        response = requests.get(url, stream=True, allow_redirects=True)
         response.raise_for_status()
 
         total_size = int(response.headers.get('content-length', 0))
@@ -191,7 +253,7 @@ def upload_to_s3(s3_client, local_path: Path, s3_key: str, content_type: str) ->
 
 def main():
     parser = argparse.ArgumentParser(description="Sync Cap clients to MinIO bucket")
-    parser.add_argument('--version', '-v', help="Specific version tag (e.g., cap-v0.3.83)")
+    parser.add_argument('--version', '-v', help="Specific version tag (e.g., cap-v0.4.1)")
     args = parser.parse_args()
 
     load_env()
@@ -203,7 +265,7 @@ def main():
     ))
     console.print()
 
-    # Get version to download
+    # Get version to download - prefer CLI arg, then env var
     version = args.version or os.environ.get('CAP_VERSION', None)
 
     # Fetch release information
@@ -214,14 +276,15 @@ def main():
             release = get_release_by_tag(version)
         else:
             console.print("[dim]Fetching latest release...[/dim]")
+            console.print("[yellow]![/yellow] No CAP_VERSION set - using latest release")
             release = get_latest_release()
 
         release_tag = release['tag_name']
         release_name = release.get('name', release_tag)
-        assets = release.get('assets', [])
+        github_assets = release.get('assets', [])
+        release_body = release.get('body', '')
 
         console.print(f"[green]✓[/green] Found release: {release_name} ({release_tag})")
-        console.print(f"[dim]  {len(assets)} assets available[/dim]")
 
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:
@@ -234,6 +297,18 @@ def main():
     except Exception as e:
         console.print(f"[red]✗[/red] Error: {e}")
         sys.exit(1)
+
+    # Determine download source: GitHub assets or CrabNebula CDN
+    crabnebula_downloads = []
+    if github_assets:
+        console.print(f"[dim]  Source: GitHub Assets ({len(github_assets)} files)[/dim]")
+    else:
+        # Parse release body for CrabNebula downloads
+        crabnebula_downloads = parse_crabnebula_downloads(release_body)
+        if crabnebula_downloads:
+            console.print(f"[dim]  Source: CrabNebula CDN ({len(crabnebula_downloads)} files)[/dim]")
+        else:
+            console.print("[yellow]![/yellow] No downloads found in release")
 
     # Connect to MinIO
     console.print("\n[bold]Step 2: Connecting to MinIO[/bold]")
@@ -268,38 +343,66 @@ def main():
             console=console
         ) as progress:
 
-            for pattern, target_name, content_type in ASSET_MAPPINGS:
-                asset = find_matching_asset(assets, pattern)
+            # Method 1: GitHub Assets (older releases)
+            if github_assets:
+                for pattern, target_name, content_type in GITHUB_ASSET_MAPPINGS:
+                    asset = find_matching_asset(github_assets, pattern)
 
-                if not asset:
-                    results.append((target_name, "Not found", "yellow"))
-                    continue
+                    if not asset:
+                        results.append((target_name, "Not found", "yellow"))
+                        continue
 
-                # Download
-                download_url = asset['browser_download_url']
-                local_file = temp_dir / target_name
-                file_size = asset.get('size', 0)
+                    # Download
+                    download_url = asset['browser_download_url']
+                    local_file = temp_dir / target_name
+                    file_size = asset.get('size', 0)
 
-                task = progress.add_task(
-                    f"[cyan]Downloading {target_name}[/cyan]",
-                    total=file_size
-                )
+                    task = progress.add_task(
+                        f"[cyan]Downloading {target_name}[/cyan]",
+                        total=file_size
+                    )
 
-                if not download_file(download_url, local_file, progress, task):
-                    results.append((target_name, "Download failed", "red"))
-                    continue
+                    if not download_file(download_url, local_file, progress, task):
+                        results.append((target_name, "Download failed", "red"))
+                        continue
 
-                progress.update(task, description=f"[cyan]Uploading {target_name}[/cyan]")
+                    progress.update(task, description=f"[cyan]Uploading {target_name}[/cyan]")
 
-                # Upload
-                if upload_to_s3(s3_client, local_file, target_name, content_type):
-                    size_mb = file_size / (1024 * 1024)
-                    results.append((target_name, f"✓ {size_mb:.1f} MB", "green"))
-                else:
-                    results.append((target_name, "Upload failed", "red"))
+                    # Upload
+                    if upload_to_s3(s3_client, local_file, target_name, content_type):
+                        size_mb = local_file.stat().st_size / (1024 * 1024)
+                        results.append((target_name, f"✓ {size_mb:.1f} MB", "green"))
+                    else:
+                        results.append((target_name, "Upload failed", "red"))
 
-                # Remove temp file
-                local_file.unlink(missing_ok=True)
+                    # Remove temp file
+                    local_file.unlink(missing_ok=True)
+
+            # Method 2: CrabNebula CDN (newer releases)
+            elif crabnebula_downloads:
+                for platform_text, download_url, target_name, content_type in crabnebula_downloads:
+                    local_file = temp_dir / target_name
+
+                    task = progress.add_task(
+                        f"[cyan]Downloading {target_name}[/cyan]",
+                        total=None  # Unknown size until we start
+                    )
+
+                    if not download_file(download_url, local_file, progress, task):
+                        results.append((target_name, "Download failed", "red"))
+                        continue
+
+                    progress.update(task, description=f"[cyan]Uploading {target_name}[/cyan]")
+
+                    # Upload
+                    if upload_to_s3(s3_client, local_file, target_name, content_type):
+                        size_mb = local_file.stat().st_size / (1024 * 1024)
+                        results.append((target_name, f"✓ {size_mb:.1f} MB", "green"))
+                    else:
+                        results.append((target_name, "Upload failed", "red"))
+
+                    # Remove temp file
+                    local_file.unlink(missing_ok=True)
 
     finally:
         # Cleanup temp directory
@@ -317,11 +420,8 @@ def main():
     console.print(table)
 
     # Upload version info
-    version_info = f"{release_tag}\n"
-    version_file = temp_dir.parent / "version.txt"
-    version_file.write_text(version_info)
-
     try:
+        version_info = f"{release_tag}\n"
         s3_client.put_object(
             Bucket=BUCKET_NAME,
             Key="version.txt",
@@ -329,19 +429,18 @@ def main():
             ContentType="text/plain"
         )
         console.print(f"\n[green]✓[/green] Version file updated: {release_tag}")
-    except:
+    except Exception:
         pass
-    finally:
-        version_file.unlink(missing_ok=True)
 
     # Final info
     s3_hostname = os.environ.get('S3_HOSTNAME', 'assets.screenrecorder.app.bauer-group.com')
     success_count = sum(1 for _, status, color in results if color == "green")
+    total_count = len(results) if results else len(GITHUB_ASSET_MAPPINGS)
 
     console.print(Panel.fit(
         f"[bold green]Sync Complete![/bold green]\n\n"
         f"Version: [cyan]{release_tag}[/cyan]\n"
-        f"Files uploaded: [cyan]{success_count}/{len(ASSET_MAPPINGS)}[/cyan]\n\n"
+        f"Files uploaded: [cyan]{success_count}/{total_count}[/cyan]\n\n"
         f"Download URL:\n"
         f"[cyan]https://{s3_hostname}/{BUCKET_NAME}/[/cyan]",
         border_style="green"
