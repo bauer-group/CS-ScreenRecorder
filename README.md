@@ -104,7 +104,9 @@ CS-ScreenRecorder/
 │   ├── Dockerfile                # Custom Cap image
 │   ├── patches/                  # Source code patches
 │   │   ├── 001-microsoft-entra-id.sh
-│   │   └── 002-smtp-email.sh
+│   │   ├── 002-smtp-email.sh
+│   │   ├── 003-branding.sh
+│   │   └── 004-redirects.sh      # URL redirects (/download → cap.so)
 │   └── branding/                 # Logo sources
 │       ├── branding.env          # Branding config
 │       └── logo-source-*.{eps,svg,png}
