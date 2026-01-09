@@ -174,7 +174,8 @@ LABEL org.opencontainers.image.version="0.0.0"
 
 # Extended Labels
 LABEL org.opencontainers.image.base.name="https://github.com/CapSoftware/Cap#${CAP_VERSION}"
-LABEL com.bauer-group.cap.version="${CAP_VERSION}"
+LABEL com.bauer-group.image.version="${CAP_VERSION}"
+LABEL com.bauer-group.image.build.type="custom"
 
 # =============================================================================
 # Runtime Configuration

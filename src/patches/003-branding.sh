@@ -94,6 +94,7 @@ if [ -f "$GLOBALS_CSS" ]; then
     sed -i "s/--secondary-3: #117ebd;/--secondary-3: ${BRAND_SECONDARY_3};/g" "$GLOBALS_CSS"
     sed -i "s/--tertiary: #c5eaff;/--tertiary: ${BRAND_TERTIARY};/g" "$GLOBALS_CSS"
     sed -i "s/--tertiary-2: #d3e5ff;/--tertiary-2: ${BRAND_TERTIARY_2};/g" "$GLOBALS_CSS"
+    sed -i "s/--tertiary-3: #e0edff;/--tertiary-3: #FFF7ED;/g" "$GLOBALS_CSS"
     echo -e "${GREEN}  ✓ Updated Hex color variables${NC}"
 
     # -------------------------------------------------------------------------
@@ -134,6 +135,72 @@ if [ -f "$GLOBALS_CSS" ]; then
     # Original: --ring: 224 71.4% 4.1%;
     sed -i "s/--ring: 224 71.4% 4.1%;/--ring: ${BRAND_PRIMARY_HSL};/g" "$GLOBALS_CSS"
     sed -i "s/--ring: 224 71\.4% 4\.1%;/--ring: ${BRAND_PRIMARY_HSL};/g" "$GLOBALS_CSS"
+
+    # -------------------------------------------------------------------------
+    # Part C: Replace Dark Mode HSL color variables (.dark class)
+    # These affect buttons and UI elements in dark mode!
+    # -------------------------------------------------------------------------
+
+    # Dark mode primary (text on dark background - keep light for contrast)
+    # Original: --primary: 210 20% 98%;
+    sed -i "s/--primary: 210 20% 98%;/--primary: ${BRAND_PRIMARY_FOREGROUND_HSL};/g" "$GLOBALS_CSS"
+
+    # Dark mode secondary
+    # Original: --secondary: 215 27.9% 16.9%;
+    sed -i "s/--secondary: 215 27.9% 16.9%;/--secondary: 32 30% 15%;/g" "$GLOBALS_CSS"
+    sed -i "s/--secondary: 215 27\.9% 16\.9%;/--secondary: 32 30% 15%;/g" "$GLOBALS_CSS"
+
+    # Dark mode secondary foreground
+    # Original: --secondary-foreground: 210 20% 98%;
+    sed -i "s/--secondary-foreground: 210 20% 98%;/--secondary-foreground: ${BRAND_PRIMARY_FOREGROUND_HSL};/g" "$GLOBALS_CSS"
+
+    # Dark mode ring
+    # Original: --ring: 216 12.2% 83.9%;
+    sed -i "s/--ring: 216 12.2% 83.9%;/--ring: ${BRAND_PRIMARY_HSL};/g" "$GLOBALS_CSS"
+    sed -i "s/--ring: 216 12\.2% 83\.9%;/--ring: ${BRAND_PRIMARY_HSL};/g" "$GLOBALS_CSS"
+
+    # Dark mode accent
+    # Original: --accent: 215 27.9% 16.9%;
+    sed -i "s/--accent: 215 27.9% 16.9%;/--accent: 32 30% 15%;/g" "$GLOBALS_CSS"
+    sed -i "s/--accent: 215 27\.9% 16\.9%;/--accent: 32 30% 15%;/g" "$GLOBALS_CSS"
+
+    # Dark mode accent foreground
+    # Original: --accent-foreground: 210 20% 98%;
+    sed -i "s/--accent-foreground: 210 20% 98%;/--accent-foreground: ${BRAND_PRIMARY_FOREGROUND_HSL};/g" "$GLOBALS_CSS"
+
+    # Dark mode border (blue-ish gray to neutral)
+    # Original: --border: 215 27.9% 16.9%;
+    sed -i "s/--border: 215 27.9% 16.9%;/--border: 32 10% 20%;/g" "$GLOBALS_CSS"
+    sed -i "s/--border: 215 27\.9% 16\.9%;/--border: 32 10% 20%;/g" "$GLOBALS_CSS"
+
+    # Dark mode input
+    # Original: --input: 215 27.9% 16.9%;
+    sed -i "s/--input: 215 27.9% 16.9%;/--input: 32 10% 20%;/g" "$GLOBALS_CSS"
+    sed -i "s/--input: 215 27\.9% 16\.9%;/--input: 32 10% 20%;/g" "$GLOBALS_CSS"
+
+    # Dark mode chart colors (blue -> orange)
+    # Original: --chart-1: 220 70% 50%;
+    sed -i "s/--chart-1: 220 70% 50%;/--chart-1: ${BRAND_PRIMARY_HSL};/g" "$GLOBALS_CSS"
+
+    echo -e "${GREEN}  ✓ Updated dark mode HSL color variables${NC}"
+
+    # -------------------------------------------------------------------------
+    # Part D: Replace Light Mode border/input colors (subtle blue tint -> neutral)
+    # -------------------------------------------------------------------------
+
+    # Light mode border (blue-ish gray to neutral gray)
+    # Original: --border: 220 13% 91%;
+    sed -i "s/--border: 220 13% 91%;/--border: 0 0% 90%;/g" "$GLOBALS_CSS"
+
+    # Light mode input
+    # Original: --input: 220 13% 91%;
+    sed -i "s/--input: 220 13% 91%;/--input: 0 0% 90%;/g" "$GLOBALS_CSS"
+
+    # Light mode chart-3 (dark blue -> dark orange)
+    # Original: --chart-3: 197 37% 24%;
+    sed -i "s/--chart-3: 197 37% 24%;/--chart-3: 32 80% 30%;/g" "$GLOBALS_CSS"
+
+    echo -e "${GREEN}  ✓ Updated light mode border/input colors${NC}"
 
     echo -e "${GREEN}  ✓ Updated shadcn/ui HSL color variables${NC}"
 else
@@ -241,6 +308,94 @@ find "$APP_DIR" -type f -name "*.tsx" 2>/dev/null | xargs grep -l "#4785FF\|#478
     sed -i 's/#adc9ff/#FDBA74/g' "$file"
     echo -e "${GREEN}  ✓ Updated colors in $(basename "$file")${NC}"
 done
+
+# =============================================================================
+# 4b. Patch Button.tsx - Replace blue variants with orange
+# =============================================================================
+echo -e "${BLUE}[4b/5] Patching Button component blue variants...${NC}"
+
+BUTTON_TSX="$APP_DIR/packages/ui/src/components/Button.tsx"
+
+if [ -f "$BUTTON_TSX" ]; then
+    # Replace Tailwind blue classes with orange equivalents
+    # blue variant: bg-blue-600 -> bg-orange-500, border-blue-800 -> border-orange-700, hover:bg-blue-700 -> hover:bg-orange-600
+    sed -i 's/bg-blue-600/bg-orange-500/g' "$BUTTON_TSX"
+    sed -i 's/border-blue-800/border-orange-700/g' "$BUTTON_TSX"
+    sed -i 's/hover:bg-blue-700/hover:bg-orange-600/g' "$BUTTON_TSX"
+
+    # radialblue variant hex colors
+    # #9BC4FF (light blue) -> #FDBA74 (light orange)
+    # #3588FF (standard blue) -> #FF8500 (BAUER orange)
+    sed -i 's/#9BC4FF/#FDBA74/g' "$BUTTON_TSX"
+    sed -i 's/#9bc4ff/#FDBA74/g' "$BUTTON_TSX"
+    sed -i 's/#3588FF/#FF8500/g' "$BUTTON_TSX"
+    sed -i 's/#3588ff/#FF8500/g' "$BUTTON_TSX"
+
+    # shadow-blue-400 -> shadow-orange-400
+    sed -i 's/shadow-blue-400/shadow-orange-400/g' "$BUTTON_TSX"
+
+    echo -e "${GREEN}  ✓ Updated Button blue variants (blue → orange)${NC}"
+else
+    echo -e "${YELLOW}  • Button.tsx not found at expected location${NC}"
+    # Try to find it elsewhere
+    FOUND_BUTTON=$(find "$APP_DIR" -name "Button.tsx" -path "*/ui/*" -type f 2>/dev/null | head -1)
+    if [ -n "$FOUND_BUTTON" ]; then
+        sed -i 's/bg-blue-600/bg-orange-500/g' "$FOUND_BUTTON"
+        sed -i 's/border-blue-800/border-orange-700/g' "$FOUND_BUTTON"
+        sed -i 's/hover:bg-blue-700/hover:bg-orange-600/g' "$FOUND_BUTTON"
+        sed -i 's/#9BC4FF/#FDBA74/g' "$FOUND_BUTTON"
+        sed -i 's/#9bc4ff/#FDBA74/g' "$FOUND_BUTTON"
+        sed -i 's/#3588FF/#FF8500/g' "$FOUND_BUTTON"
+        sed -i 's/#3588ff/#FF8500/g' "$FOUND_BUTTON"
+        sed -i 's/shadow-blue-400/shadow-orange-400/g' "$FOUND_BUTTON"
+        echo -e "${GREEN}  ✓ Found and updated Button at: $FOUND_BUTTON${NC}"
+    fi
+fi
+
+# Also find and patch any other components using blue Tailwind classes for buttons
+echo -e "${BLUE}    Searching for other blue button usages...${NC}"
+find "$APP_DIR" -type f \( -name "*.tsx" -o -name "*.jsx" \) 2>/dev/null | xargs grep -l "bg-blue-\|text-blue-\|border-blue-" 2>/dev/null | while read file; do
+    # Replace common blue button patterns with orange
+    sed -i 's/bg-blue-500/bg-orange-500/g' "$file"
+    sed -i 's/bg-blue-600/bg-orange-500/g' "$file"
+    sed -i 's/bg-blue-700/bg-orange-600/g' "$file"
+    sed -i 's/hover:bg-blue-600/hover:bg-orange-600/g' "$file"
+    sed -i 's/hover:bg-blue-700/hover:bg-orange-600/g' "$file"
+    sed -i 's/border-blue-500/border-orange-500/g' "$file"
+    sed -i 's/border-blue-600/border-orange-600/g' "$file"
+    sed -i 's/border-blue-700/border-orange-700/g' "$file"
+    sed -i 's/border-blue-800/border-orange-700/g' "$file"
+    sed -i 's/text-blue-500/text-orange-500/g' "$file"
+    sed -i 's/text-blue-600/text-orange-600/g' "$file"
+    sed -i 's/ring-blue-500/ring-orange-500/g' "$file"
+    sed -i 's/focus:ring-blue-500/focus:ring-orange-500/g' "$file"
+    echo -e "${GREEN}  ✓ Updated blue classes in $(basename "$file")${NC}"
+done
+
+# =============================================================================
+# 4c. Patch Switch.tsx - Replace blue checked state with orange
+# =============================================================================
+echo -e "${BLUE}[4c/5] Patching Switch component...${NC}"
+
+SWITCH_TSX="$APP_DIR/packages/ui/src/components/Switch.tsx"
+
+if [ -f "$SWITCH_TSX" ]; then
+    # Replace blue checked state with orange
+    # data-[state=checked]:bg-blue-500 -> data-[state=checked]:bg-orange-500
+    sed -i 's/bg-blue-500/bg-orange-500/g' "$SWITCH_TSX"
+    # focus-visible:outline-blue-500 -> focus-visible:outline-orange-500
+    sed -i 's/outline-blue-500/outline-orange-500/g' "$SWITCH_TSX"
+    echo -e "${GREEN}  ✓ Updated Switch colors (blue → orange)${NC}"
+else
+    echo -e "${YELLOW}  • Switch.tsx not found at expected location${NC}"
+    # Try to find it elsewhere
+    FOUND_SWITCH=$(find "$APP_DIR" -name "Switch.tsx" -path "*/ui/*" -type f 2>/dev/null | head -1)
+    if [ -n "$FOUND_SWITCH" ]; then
+        sed -i 's/bg-blue-500/bg-orange-500/g' "$FOUND_SWITCH"
+        sed -i 's/outline-blue-500/outline-orange-500/g' "$FOUND_SWITCH"
+        echo -e "${GREEN}  ✓ Found and updated Switch at: $FOUND_SWITCH${NC}"
+    fi
+fi
 
 # =============================================================================
 # 5. Update site config if exists
