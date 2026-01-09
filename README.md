@@ -37,11 +37,11 @@ Edit `.env` and set your domain:
 # For development
 WEB_URL=http://localhost:3000
 
-# For production
-WEB_URL=https://screenrecorder.app.bauer-group.com
-SERVICE_HOSTNAME=screenrecorder.app.bauer-group.com
-S3_HOSTNAME=assets.screenrecorder.app.bauer-group.com
-S3_CONSOLE_HOSTNAME=assets-console.screenrecorder.app.bauer-group.com
+# For production (set your own domain)
+WEB_URL=https://your-domain.com
+SERVICE_HOSTNAME=your-domain.com
+S3_HOSTNAME=assets.your-domain.com
+S3_CONSOLE_HOSTNAME=assets-console.your-domain.com
 ```
 
 ### 3. Start the Stack
@@ -61,13 +61,12 @@ docker compose -f docker-compose.traefik.yml up -d
 # Deploy via Coolify dashboard using docker-compose.coolify.yml
 ```
 
-### 4. Access Cap
+### 4. Access Cap (Development)
 
-| Environment | URL |
-|-------------|-----|
-| Development | http://localhost:3000 |
-| Production | https://screenrecorder.app.bauer-group.com |
-| MinIO Console | http://localhost:9001 (dev) / https://assets-console... (prod) |
+| Service | URL |
+|---------|-----|
+| Web App | `http://localhost:3000` |
+| MinIO Console | `http://localhost:9001` |
 
 ## Architecture
 
@@ -201,7 +200,7 @@ SMTP_FROM_NAME=Screen Recorder
 
 ```bash
 RESEND_API_KEY=re_xxxxx
-RESEND_FROM_DOMAIN=mail.bauer-group.com
+RESEND_FROM_DOMAIN=mail.your-domain.com
 ```
 
 Priority: SMTP > Resend > Console Log
