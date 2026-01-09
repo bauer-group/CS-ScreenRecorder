@@ -110,7 +110,7 @@ def get_s3_client():
         aws_access_key_id=access_key,
         aws_secret_access_key=secret_key,
         config=Config(signature_version='s3v4'),
-        region_name='us-east-1'  # MinIO requires a region
+        region_name='global'
     )
 
 
