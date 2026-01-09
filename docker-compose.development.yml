@@ -100,6 +100,9 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - GROQ_API_KEY=${GROQ_API_KEY:-}
 
+      # Note: For additional features (Payments, Integrations, CDN, Workflows),
+      # see docker-compose.traefik.yml or docker-compose.coolify.yml
+
     ports:
       - "${EXPOSED_APP_PORT:-3000}:3000"
     networks:

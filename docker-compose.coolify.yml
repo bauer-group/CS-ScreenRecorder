@@ -94,6 +94,26 @@ services:
       - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-}
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-}
 
+      # -- Integrations (Optional) --
+      - DISCORD_FEEDBACK_WEBHOOK_URL=${DISCORD_FEEDBACK_WEBHOOK_URL:-}
+      - DISCORD_LOGS_WEBHOOK_URL=${DISCORD_LOGS_WEBHOOK_URL:-}
+      - TINYBIRD_HOST=${TINYBIRD_HOST:-}
+      - TINYBIRD_TOKEN=${TINYBIRD_TOKEN:-}
+      - DUB_API_KEY=${DUB_API_KEY:-}
+      - INTERCOM_SECRET=${INTERCOM_SECRET:-}
+      - POSTHOG_PERSONAL_API_KEY=${POSTHOG_PERSONAL_API_KEY:-}
+
+      # -- CDN (Optional) --
+      # CloudFront CDN - Only uncomment if you have a valid CloudFront configuration!
+      # Empty values cause "DECODER routines::unsupported" errors.
+      # - CAP_CLOUDFRONT_DISTRIBUTION_ID=${CAP_CLOUDFRONT_DISTRIBUTION_ID}
+      # - CLOUDFRONT_KEYPAIR_ID=${CLOUDFRONT_KEYPAIR_ID}
+      # - CLOUDFRONT_KEYPAIR_PRIVATE_KEY=${CLOUDFRONT_KEYPAIR_PRIVATE_KEY}
+
+      # -- Workflows (Optional) --
+      - WORKFLOWS_RPC_URL=${WORKFLOWS_RPC_URL:-}
+      - WORKFLOWS_RPC_SECRET=${WORKFLOWS_RPC_SECRET:-}
+
     expose:
       - 3000/tcp
     networks:

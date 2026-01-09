@@ -105,9 +105,11 @@ services:
       - POSTHOG_PERSONAL_API_KEY=${POSTHOG_PERSONAL_API_KEY:-}
 
       # -- CDN (Optional) --
-      - CAP_CLOUDFRONT_DISTRIBUTION_ID=${CAP_CLOUDFRONT_DISTRIBUTION_ID:-}
-      - CLOUDFRONT_KEYPAIR_ID=${CLOUDFRONT_KEYPAIR_ID:-}
-      - CLOUDFRONT_KEYPAIR_PRIVATE_KEY=${CLOUDFRONT_KEYPAIR_PRIVATE_KEY:-}
+      # CloudFront CDN - Only uncomment if you have a valid CloudFront configuration!
+      # Empty values cause "DECODER routines::unsupported" errors.
+      # - CAP_CLOUDFRONT_DISTRIBUTION_ID=${CAP_CLOUDFRONT_DISTRIBUTION_ID}
+      # - CLOUDFRONT_KEYPAIR_ID=${CLOUDFRONT_KEYPAIR_ID}
+      # - CLOUDFRONT_KEYPAIR_PRIVATE_KEY=${CLOUDFRONT_KEYPAIR_PRIVATE_KEY}
 
       # -- Workflows (Optional) --
       - WORKFLOWS_RPC_URL=${WORKFLOWS_RPC_URL:-}
