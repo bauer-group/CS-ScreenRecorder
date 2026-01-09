@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screen Recorder Download - BAUER GROUP</title>
+    <meta name="description" content="Download Screen Recorder for Windows, macOS, and Linux">
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <style>
+        :root {
+            --primary: #FF8500;
+            --primary-dark: #EA6D00;
+            --primary-light: #FDBA74;
+            --bg-dark: #1a1a1a;
+            --bg-card: #242424;
+            --bg-card-hover: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --border: #333333;
+            --success: #22c55e;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+            width: 100%;
+        }
+
+        /* Header */
+        header {
+            padding: 24px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            text-decoration: none;
+            color: var(--text-primary);
+        }
+
+        .logo svg {
+            width: 40px;
+            height: 40px;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .logo-text span {
+            color: var(--primary);
+        }
+
+        /* Language Selector */
+        .lang-selector {
+            position: relative;
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+
+        .lang-btn:hover {
+            border-color: var(--primary);
+        }
+
+        .lang-dropdown {
+            display: none;
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 4px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            min-width: 160px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .lang-dropdown.show {
+            display: block;
+        }
+
+        .lang-option {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .lang-option:hover {
+            background: var(--bg-card-hover);
+        }
+
+        .lang-option.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 80px 0 60px;
+        }
+
+        .hero h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, var(--text-primary) 0%, var(--primary-light) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        /* Downloads Grid */
+        .downloads {
+            padding: 40px 0 80px;
+        }
+
+        .downloads-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-top: 40px;
+        }
+
+        .download-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-card:hover {
+            background: var(--bg-card-hover);
+            border-color: var(--primary);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(255, 133, 0, 0.1);
+        }
+
+        .download-card.recommended::before {
+            content: attr(data-recommended);
+            position: absolute;
+            top: 16px;
+            right: -32px;
+            background: var(--primary);
+            color: white;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 4px 40px;
+            transform: rotate(45deg);
+        }
+
+        .os-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            border-radius: 16px;
+        }
+
+        .os-icon svg {
+            width: 36px;
+            height: 36px;
+            fill: white;
+        }
+
+        .download-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .download-card .version {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 24px;
+        }
+
+        .download-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+            padding: 14px 24px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .download-btn:hover {
+            transform: scale(1.02);
+            box-shadow: 0 8px 20px rgba(255, 133, 0, 0.3);
+        }
+
+        .download-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .file-info {
+            margin-top: 16px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        /* Alternative Downloads */
+        .alt-downloads {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+
+        .alt-downloads a {
+            display: inline-block;
+            color: var(--primary-light);
+            text-decoration: none;
+            font-size: 0.875rem;
+            margin: 4px 8px;
+            transition: color 0.2s;
+        }
+
+        .alt-downloads a:hover {
+            color: var(--primary);
+            text-decoration: underline;
+        }
+
+        /* Features */
+        .features {
+            padding: 60px 0;
+            background: var(--bg-card);
+            border-top: 1px solid var(--border);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 40px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 32px;
+        }
+
+        .feature {
+            text-align: center;
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 16px;
+            color: var(--primary);
+        }
+
+        .feature h3 {
+            font-size: 1.125rem;
+            margin-bottom: 8px;
+        }
+
+        .feature p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        footer {
+            padding: 40px 0;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        footer p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .downloads-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .header-content {
+                flex-direction: column;
+                gap: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <a href="/" class="logo">
+                    <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="50" cy="50" r="45" fill="#FF8500"/>
+                        <circle cx="50" cy="50" r="30" fill="#1a1a1a"/>
+                        <circle cx="50" cy="50" r="15" fill="#FF8500"/>
+                    </svg>
+                    <span class="logo-text">Screen Recorder <span>[BAUER GROUP]</span></span>
+                </a>
+                <div class="lang-selector">
+                    <button class="lang-btn" onclick="toggleLangDropdown()">
+                        <span id="current-lang-flag">🌐</span>
+                        <span id="current-lang-name">English</span>
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 10l5 5 5-5z"/></svg>
+                    </button>
+                    <div class="lang-dropdown" id="lang-dropdown"></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <div class="container">
+                <h1 data-i18n="hero.title">Download Screen Recorder</h1>
+                <p data-i18n="hero.subtitle">Create professional screen recordings. Free and securely hosted on our servers.</p>
+            </div>
+        </section>
+
+        <section class="downloads">
+            <div class="container">
+                <div class="downloads-grid">
+                    <!-- Windows -->
+                    <div class="download-card recommended" data-recommended="Recommended" data-os="windows">
+                        <div class="os-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+                            </svg>
+                        </div>
+                        <h3>Windows</h3>
+                        <p class="version" data-i18n="windows.version">Windows 10/11 (64-bit)</p>
+                        <a href="Cap-Setup-x64.exe" class="download-btn">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-6 4h12v-2H6v2z"/>
+                            </svg>
+                            <span data-i18n="download.button">Download</span> (.exe)
+                        </a>
+                        <p class="file-info">Cap-Setup-x64.exe</p>
+                        <div class="alt-downloads">
+                            <a href="Cap-Setup-arm64.exe" data-i18n="windows.arm">ARM64 Version</a>
+                        </div>
+                    </div>
+
+                    <!-- macOS -->
+                    <div class="download-card" data-os="macos">
+                        <div class="os-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+                            </svg>
+                        </div>
+                        <h3>macOS</h3>
+                        <p class="version" data-i18n="macos.version">macOS 11+ (Big Sur or newer)</p>
+                        <a href="Cap-Setup-universal.dmg" class="download-btn">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-6 4h12v-2H6v2z"/>
+                            </svg>
+                            <span data-i18n="download.button">Download</span> (.dmg)
+                        </a>
+                        <p class="file-info">Cap-Setup-universal.dmg (Universal)</p>
+                        <div class="alt-downloads">
+                            <a href="Cap-Setup-x64.dmg">Intel (x64)</a>
+                            <a href="Cap-Setup-arm64.dmg">Apple Silicon</a>
+                        </div>
+                    </div>
+
+                    <!-- Linux -->
+                    <div class="download-card" data-os="linux">
+                        <div class="os-icon">
+                            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.45.6-.663.839-.199.199-.485.267-.797.4-.313.136-.658.269-.864.68-.09.189-.136.394-.132.602 0 .199.027.4.055.536.058.399.116.728.04.97-.249.68-.28 1.145-.106 1.484.174.334.535.47.94.601.81.2 1.91.135 2.774.6.926.466 1.866.67 2.616.47.526-.116.97-.464 1.208-.946.587-.003 1.23-.269 2.26-.334.699-.058 1.574.267 2.577.2.025.134.063.198.114.333l.003.003c.391.778 1.113 1.132 1.884 1.071.771-.06 1.592-.536 2.257-1.306.631-.765 1.683-1.084 2.378-1.503.348-.199.629-.469.649-.853.023-.4-.2-.811-.714-1.376v-.097l-.003-.003c-.17-.2-.25-.535-.338-.926-.085-.401-.182-.786-.492-1.046h-.003c-.059-.054-.123-.067-.188-.135a.357.357 0 00-.19-.064c.431-1.278.264-2.55-.173-3.694-.533-1.41-1.465-2.638-2.175-3.483-.796-1.005-1.576-1.957-1.56-3.368.026-2.152.236-6.133-3.544-6.139z"/>
+                            </svg>
+                        </div>
+                        <h3>Linux</h3>
+                        <p class="version">Ubuntu, Debian, Fedora</p>
+                        <a href="Cap-Setup-x64.AppImage" class="download-btn">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 16l-6-6h4V4h4v6h4l-6 6zm-6 4h12v-2H6v2z"/>
+                            </svg>
+                            <span data-i18n="download.button">Download</span> (.AppImage)
+                        </a>
+                        <p class="file-info">Cap-Setup-x64.AppImage</p>
+                        <div class="alt-downloads">
+                            <a href="Cap-Setup-x64.deb">.deb (Debian/Ubuntu)</a>
+                            <a href="Cap-Setup-x64.rpm">.rpm (Fedora/RHEL)</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="features">
+            <div class="container">
+                <h2 data-i18n="features.title">Why Screen Recorder?</h2>
+                <div class="features-grid">
+                    <div class="feature">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                        </svg>
+                        <h3 data-i18n="features.easy.title">Easy to use</h3>
+                        <p data-i18n="features.easy.desc">Intuitive interface - start recording immediately.</p>
+                    </div>
+                    <div class="feature">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/>
+                        </svg>
+                        <h3 data-i18n="features.secure.title">Secure & Private</h3>
+                        <p data-i18n="features.secure.desc">Your recordings stay on BAUER GROUP servers.</p>
+                    </div>
+                    <div class="feature">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-5 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+                        </svg>
+                        <h3 data-i18n="features.formats.title">All formats</h3>
+                        <p data-i18n="features.formats.desc">Export to MP4, WebM, GIF and more.</p>
+                    </div>
+                    <div class="feature">
+                        <svg class="feature-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2zm4.2 14.2L11 13V7h1.5v5.2l4.5 2.7-.8 1.3z"/>
+                        </svg>
+                        <h3 data-i18n="features.share.title">Quick sharing</h3>
+                        <p data-i18n="features.share.desc">Share links directly after recording.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p data-i18n="footer.copyright">&copy; 2024 BAUER GROUP. Based on <a href="https://cap.so" target="_blank">Cap</a> - Open Source Screen Recording.</p>
+            <p style="margin-top: 8px;">
+                <a href="https://go.bauer-group.com/screenrecorder" data-i18n="footer.info">More information</a> |
+                <a href="https://go.bauer-group.com/screenrecorder-privacy" data-i18n="footer.privacy">Privacy Policy</a>
+            </p>
+        </div>
+    </footer>
+
+    <script>
+        // =========================================================================
+        // Multi-language Support
+        // =========================================================================
+        const translations = {
+            en: {
+                name: "English",
+                flag: "🇬🇧",
+                "hero.title": "Download Screen Recorder",
+                "hero.subtitle": "Create professional screen recordings. Free and securely hosted on our servers.",
+                "download.button": "Download",
+                "windows.version": "Windows 10/11 (64-bit)",
+                "windows.arm": "ARM64 Version",
+                "macos.version": "macOS 11+ (Big Sur or newer)",
+                "features.title": "Why Screen Recorder?",
+                "features.easy.title": "Easy to use",
+                "features.easy.desc": "Intuitive interface - start recording immediately.",
+                "features.secure.title": "Secure & Private",
+                "features.secure.desc": "Your recordings stay on BAUER GROUP servers.",
+                "features.formats.title": "All formats",
+                "features.formats.desc": "Export to MP4, WebM, GIF and more.",
+                "features.share.title": "Quick sharing",
+                "features.share.desc": "Share links directly after recording.",
+                "footer.copyright": "© 2024 BAUER GROUP. Based on <a href='https://cap.so' target='_blank'>Cap</a> - Open Source Screen Recording.",
+                "footer.info": "More information",
+                "footer.privacy": "Privacy Policy",
+                "recommended": "Recommended"
+            },
+            de: {
+                name: "Deutsch",
+                flag: "🇩🇪",
+                "hero.title": "Screen Recorder herunterladen",
+                "hero.subtitle": "Professionelle Bildschirmaufnahmen erstellen. Kostenlos und sicher auf unseren Servern gehostet.",
+                "download.button": "Download",
+                "windows.version": "Windows 10/11 (64-bit)",
+                "windows.arm": "ARM64 Version",
+                "macos.version": "macOS 11+ (Big Sur oder neuer)",
+                "features.title": "Warum Screen Recorder?",
+                "features.easy.title": "Einfach zu bedienen",
+                "features.easy.desc": "Intuitive Oberfläche - starten Sie sofort mit der Aufnahme.",
+                "features.secure.title": "Sicher & Privat",
+                "features.secure.desc": "Ihre Aufnahmen bleiben auf BAUER GROUP Servern.",
+                "features.formats.title": "Alle Formate",
+                "features.formats.desc": "Exportieren Sie in MP4, WebM, GIF und mehr.",
+                "features.share.title": "Schnell teilen",
+                "features.share.desc": "Teilen Sie Links direkt nach der Aufnahme.",
+                "footer.copyright": "© 2024 BAUER GROUP. Basierend auf <a href='https://cap.so' target='_blank'>Cap</a> - Open Source Screen Recording.",
+                "footer.info": "Weitere Informationen",
+                "footer.privacy": "Datenschutz",
+                "recommended": "Empfohlen"
+            },
+            ka: {
+                name: "ქართული",
+                flag: "🇬🇪",
+                "hero.title": "ჩამოტვირთეთ Screen Recorder",
+                "hero.subtitle": "შექმენით პროფესიონალური ეკრანის ჩანაწერები. უფასო და უსაფრთხოდ განთავსებული ჩვენს სერვერებზე.",
+                "download.button": "ჩამოტვირთვა",
+                "windows.version": "Windows 10/11 (64-bit)",
+                "windows.arm": "ARM64 ვერსია",
+                "macos.version": "macOS 11+ (Big Sur ან უფრო ახალი)",
+                "features.title": "რატომ Screen Recorder?",
+                "features.easy.title": "მარტივი გამოსაყენებელი",
+                "features.easy.desc": "ინტუიციური ინტერფეისი - დაიწყეთ ჩაწერა დაუყოვნებლივ.",
+                "features.secure.title": "უსაფრთხო და კონფიდენციალური",
+                "features.secure.desc": "თქვენი ჩანაწერები რჩება BAUER GROUP სერვერებზე.",
+                "features.formats.title": "ყველა ფორმატი",
+                "features.formats.desc": "ექსპორტი MP4, WebM, GIF და სხვა ფორმატებში.",
+                "features.share.title": "სწრაფი გაზიარება",
+                "features.share.desc": "გააზიარეთ ბმულები ჩაწერის შემდეგ.",
+                "footer.copyright": "© 2024 BAUER GROUP. დაფუძნებულია <a href='https://cap.so' target='_blank'>Cap</a>-ზე.",
+                "footer.info": "მეტი ინფორმაცია",
+                "footer.privacy": "კონფიდენციალურობა",
+                "recommended": "რეკომენდებული"
+            },
+            th: {
+                name: "ไทย",
+                flag: "🇹🇭",
+                "hero.title": "ดาวน์โหลด Screen Recorder",
+                "hero.subtitle": "สร้างการบันทึกหน้าจอระดับมืออาชีพ ฟรีและปลอดภัยบนเซิร์ฟเวอร์ของเรา",
+                "download.button": "ดาวน์โหลด",
+                "windows.version": "Windows 10/11 (64-bit)",
+                "windows.arm": "เวอร์ชัน ARM64",
+                "macos.version": "macOS 11+ (Big Sur หรือใหม่กว่า)",
+                "features.title": "ทำไมต้อง Screen Recorder?",
+                "features.easy.title": "ใช้งานง่าย",
+                "features.easy.desc": "อินเทอร์เฟซที่ใช้งานง่าย - เริ่มบันทึกได้ทันที",
+                "features.secure.title": "ปลอดภัยและเป็นส่วนตัว",
+                "features.secure.desc": "การบันทึกของคุณเก็บไว้บนเซิร์ฟเวอร์ BAUER GROUP",
+                "features.formats.title": "ทุกรูปแบบ",
+                "features.formats.desc": "ส่งออกเป็น MP4, WebM, GIF และอื่นๆ",
+                "features.share.title": "แชร์ได้รวดเร็ว",
+                "features.share.desc": "แชร์ลิงก์ได้ทันทีหลังบันทึก",
+                "footer.copyright": "© 2024 BAUER GROUP. สร้างจาก <a href='https://cap.so' target='_blank'>Cap</a>",
+                "footer.info": "ข้อมูลเพิ่มเติม",
+                "footer.privacy": "นโยบายความเป็นส่วนตัว",
+                "recommended": "แนะนำ"
+            },
+            zh: {
+                name: "中文",
+                flag: "🇨🇳",
+                "hero.title": "下载 Screen Recorder",
+                "hero.subtitle": "创建专业的屏幕录像。免费且安全地托管在我们的服务器上。",
+                "download.button": "下载",
+                "windows.version": "Windows 10/11 (64位)",
+                "windows.arm": "ARM64 版本",
+                "macos.version": "macOS 11+ (Big Sur 或更新版本)",
+                "features.title": "为什么选择 Screen Recorder?",
+                "features.easy.title": "简单易用",
+                "features.easy.desc": "直观的界面 - 立即开始录制。",
+                "features.secure.title": "安全私密",
+                "features.secure.desc": "您的录像保存在 BAUER GROUP 服务器上。",
+                "features.formats.title": "所有格式",
+                "features.formats.desc": "导出为 MP4、WebM、GIF 等格式。",
+                "features.share.title": "快速分享",
+                "features.share.desc": "录制后立即分享链接。",
+                "footer.copyright": "© 2024 BAUER GROUP。基于 <a href='https://cap.so' target='_blank'>Cap</a> 开源屏幕录制。",
+                "footer.info": "更多信息",
+                "footer.privacy": "隐私政策",
+                "recommended": "推荐"
+            },
+            ru: {
+                name: "Русский",
+                flag: "🇷🇺",
+                "hero.title": "Скачать Screen Recorder",
+                "hero.subtitle": "Создавайте профессиональные записи экрана. Бесплатно и безопасно на наших серверах.",
+                "download.button": "Скачать",
+                "windows.version": "Windows 10/11 (64-бит)",
+                "windows.arm": "Версия ARM64",
+                "macos.version": "macOS 11+ (Big Sur или новее)",
+                "features.title": "Почему Screen Recorder?",
+                "features.easy.title": "Простой в использовании",
+                "features.easy.desc": "Интуитивный интерфейс - начните запись немедленно.",
+                "features.secure.title": "Безопасно и конфиденциально",
+                "features.secure.desc": "Ваши записи остаются на серверах BAUER GROUP.",
+                "features.formats.title": "Все форматы",
+                "features.formats.desc": "Экспорт в MP4, WebM, GIF и другие форматы.",
+                "features.share.title": "Быстрый обмен",
+                "features.share.desc": "Делитесь ссылками сразу после записи.",
+                "footer.copyright": "© 2024 BAUER GROUP. На основе <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.info": "Подробнее",
+                "footer.privacy": "Политика конфиденциальности",
+                "recommended": "Рекомендуется"
+            },
+            vi: {
+                name: "Tiếng Việt",
+                flag: "🇻🇳",
+                "hero.title": "Tải xuống Screen Recorder",
+                "hero.subtitle": "Tạo bản ghi màn hình chuyên nghiệp. Miễn phí và lưu trữ an toàn trên máy chủ của chúng tôi.",
+                "download.button": "Tải xuống",
+                "windows.version": "Windows 10/11 (64-bit)",
+                "windows.arm": "Phiên bản ARM64",
+                "macos.version": "macOS 11+ (Big Sur trở lên)",
+                "features.title": "Tại sao chọn Screen Recorder?",
+                "features.easy.title": "Dễ sử dụng",
+                "features.easy.desc": "Giao diện trực quan - bắt đầu ghi ngay lập tức.",
+                "features.secure.title": "An toàn & Riêng tư",
+                "features.secure.desc": "Bản ghi của bạn được lưu trên máy chủ BAUER GROUP.",
+                "features.formats.title": "Tất cả định dạng",
+                "features.formats.desc": "Xuất ra MP4, WebM, GIF và nhiều định dạng khác.",
+                "features.share.title": "Chia sẻ nhanh",
+                "features.share.desc": "Chia sẻ liên kết ngay sau khi ghi.",
+                "footer.copyright": "© 2024 BAUER GROUP. Dựa trên <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.info": "Thông tin thêm",
+                "footer.privacy": "Chính sách bảo mật",
+                "recommended": "Đề xuất"
+            },
+            ms: {
+                name: "Bahasa Melayu",
+                flag: "🇲🇾",
+                "hero.title": "Muat turun Screen Recorder",
+                "hero.subtitle": "Cipta rakaman skrin profesional. Percuma dan selamat di pelayan kami.",
+                "download.button": "Muat turun",
+                "windows.version": "Windows 10/11 (64-bit)",
+                "windows.arm": "Versi ARM64",
+                "macos.version": "macOS 11+ (Big Sur atau lebih baru)",
+                "features.title": "Mengapa Screen Recorder?",
+                "features.easy.title": "Mudah digunakan",
+                "features.easy.desc": "Antara muka intuitif - mula merakam dengan segera.",
+                "features.secure.title": "Selamat & Peribadi",
+                "features.secure.desc": "Rakaman anda kekal di pelayan BAUER GROUP.",
+                "features.formats.title": "Semua format",
+                "features.formats.desc": "Eksport ke MP4, WebM, GIF dan banyak lagi.",
+                "features.share.title": "Kongsi pantas",
+                "features.share.desc": "Kongsi pautan terus selepas merakam.",
+                "footer.copyright": "© 2024 BAUER GROUP. Berdasarkan <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.info": "Maklumat lanjut",
+                "footer.privacy": "Dasar Privasi",
+                "recommended": "Disyorkan"
+            },
+            fr: {
+                name: "Français",
+                flag: "🇫🇷",
+                "hero.title": "Télécharger Screen Recorder",
+                "hero.subtitle": "Créez des enregistrements d'écran professionnels. Gratuit et hébergé en toute sécurité sur nos serveurs.",
+                "download.button": "Télécharger",
+                "windows.version": "Windows 10/11 (64-bit)",
+                "windows.arm": "Version ARM64",
+                "macos.version": "macOS 11+ (Big Sur ou plus récent)",
+                "features.title": "Pourquoi Screen Recorder?",
+                "features.easy.title": "Facile à utiliser",
+                "features.easy.desc": "Interface intuitive - commencez à enregistrer immédiatement.",
+                "features.secure.title": "Sécurisé et privé",
+                "features.secure.desc": "Vos enregistrements restent sur les serveurs BAUER GROUP.",
+                "features.formats.title": "Tous les formats",
+                "features.formats.desc": "Exportez en MP4, WebM, GIF et plus encore.",
+                "features.share.title": "Partage rapide",
+                "features.share.desc": "Partagez des liens directement après l'enregistrement.",
+                "footer.copyright": "© 2024 BAUER GROUP. Basé sur <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.info": "Plus d'informations",
+                "footer.privacy": "Politique de confidentialité",
+                "recommended": "Recommandé"
+            },
+            es: {
+                name: "Español",
+                flag: "🇪🇸",
+                "hero.title": "Descargar Screen Recorder",
+                "hero.subtitle": "Crea grabaciones de pantalla profesionales. Gratis y alojado de forma segura en nuestros servidores.",
+                "download.button": "Descargar",
+                "windows.version": "Windows 10/11 (64-bit)",
+                "windows.arm": "Versión ARM64",
+                "macos.version": "macOS 11+ (Big Sur o posterior)",
+                "features.title": "¿Por qué Screen Recorder?",
+                "features.easy.title": "Fácil de usar",
+                "features.easy.desc": "Interfaz intuitiva - comienza a grabar inmediatamente.",
+                "features.secure.title": "Seguro y privado",
+                "features.secure.desc": "Tus grabaciones permanecen en los servidores de BAUER GROUP.",
+                "features.formats.title": "Todos los formatos",
+                "features.formats.desc": "Exporta a MP4, WebM, GIF y más.",
+                "features.share.title": "Compartir rápido",
+                "features.share.desc": "Comparte enlaces directamente después de grabar.",
+                "footer.copyright": "© 2024 BAUER GROUP. Basado en <a href='https://cap.so' target='_blank'>Cap</a>.",
+                "footer.info": "Más información",
+                "footer.privacy": "Política de privacidad",
+                "recommended": "Recomendado"
+            },
+            ja: {
+                name: "日本語",
+                flag: "🇯🇵",
+                "hero.title": "Screen Recorderをダウンロード",
+                "hero.subtitle": "プロフェッショナルな画面録画を作成。無料で安全にホスティング。",
+                "download.button": "ダウンロード",
+                "windows.version": "Windows 10/11 (64-bit)",
+                "windows.arm": "ARM64版",
+                "macos.version": "macOS 11以降 (Big Sur以降)",
+                "features.title": "なぜScreen Recorder?",
+                "features.easy.title": "使いやすい",
+                "features.easy.desc": "直感的なインターフェース - すぐに録画を開始。",
+                "features.secure.title": "安全でプライベート",
+                "features.secure.desc": "録画はBAUER GROUPサーバーに保存されます。",
+                "features.formats.title": "すべての形式",
+                "features.formats.desc": "MP4、WebM、GIFなどにエクスポート。",
+                "features.share.title": "すばやく共有",
+                "features.share.desc": "録画後すぐにリンクを共有。",
+                "footer.copyright": "© 2024 BAUER GROUP. <a href='https://cap.so' target='_blank'>Cap</a>をベースに開発。",
+                "footer.info": "詳細情報",
+                "footer.privacy": "プライバシーポリシー",
+                "recommended": "おすすめ"
+            },
+            ko: {
+                name: "한국어",
+                flag: "🇰🇷",
+                "hero.title": "Screen Recorder 다운로드",
+                "hero.subtitle": "전문적인 화면 녹화를 만드세요. 무료이며 안전하게 호스팅됩니다.",
+                "download.button": "다운로드",
+                "windows.version": "Windows 10/11 (64비트)",
+                "windows.arm": "ARM64 버전",
+                "macos.version": "macOS 11+ (Big Sur 이상)",
+                "features.title": "왜 Screen Recorder인가요?",
+                "features.easy.title": "사용하기 쉬움",
+                "features.easy.desc": "직관적인 인터페이스 - 즉시 녹화를 시작하세요.",
+                "features.secure.title": "안전하고 개인적",
+                "features.secure.desc": "녹화는 BAUER GROUP 서버에 저장됩니다.",
+                "features.formats.title": "모든 형식",
+                "features.formats.desc": "MP4, WebM, GIF 등으로 내보내기.",
+                "features.share.title": "빠른 공유",
+                "features.share.desc": "녹화 후 바로 링크를 공유하세요.",
+                "footer.copyright": "© 2024 BAUER GROUP. <a href='https://cap.so' target='_blank'>Cap</a> 기반.",
+                "footer.info": "자세한 정보",
+                "footer.privacy": "개인정보 보호정책",
+                "recommended": "추천"
+            }
+        };
+
+        let currentLang = 'en';
+
+        function detectLanguage() {
+            const browserLang = navigator.language.split('-')[0];
+            return translations[browserLang] ? browserLang : 'en';
+        }
+
+        function setLanguage(lang) {
+            if (!translations[lang]) lang = 'en';
+            currentLang = lang;
+
+            document.documentElement.lang = lang;
+            localStorage.setItem('preferred-lang', lang);
+
+            // Update all translatable elements
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (translations[lang][key]) {
+                    el.innerHTML = translations[lang][key];
+                }
+            });
+
+            // Update recommended badges
+            document.querySelectorAll('.download-card[data-recommended]').forEach(card => {
+                card.setAttribute('data-recommended', translations[lang]['recommended'] || 'Recommended');
+            });
+
+            // Update language selector
+            document.getElementById('current-lang-flag').textContent = translations[lang].flag;
+            document.getElementById('current-lang-name').textContent = translations[lang].name;
+
+            // Update dropdown active state
+            document.querySelectorAll('.lang-option').forEach(opt => {
+                opt.classList.toggle('active', opt.dataset.lang === lang);
+            });
+        }
+
+        function toggleLangDropdown() {
+            document.getElementById('lang-dropdown').classList.toggle('show');
+        }
+
+        function initLanguageSelector() {
+            const dropdown = document.getElementById('lang-dropdown');
+
+            Object.keys(translations).forEach(lang => {
+                const option = document.createElement('div');
+                option.className = 'lang-option';
+                option.dataset.lang = lang;
+                option.innerHTML = `<span>${translations[lang].flag}</span> ${translations[lang].name}`;
+                option.onclick = () => {
+                    setLanguage(lang);
+                    dropdown.classList.remove('show');
+                };
+                dropdown.appendChild(option);
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.lang-selector')) {
+                    dropdown.classList.remove('show');
+                }
+            });
+        }
+
+        // Auto-detect OS and highlight recommended download
+        function detectOS() {
+            const platform = navigator.platform.toLowerCase();
+            const cards = document.querySelectorAll('.download-card');
+
+            cards.forEach(card => card.classList.remove('recommended'));
+
+            if (platform.includes('win')) {
+                document.querySelector('[data-os="windows"]')?.classList.add('recommended');
+            } else if (platform.includes('mac')) {
+                document.querySelector('[data-os="macos"]')?.classList.add('recommended');
+            } else if (platform.includes('linux')) {
+                document.querySelector('[data-os="linux"]')?.classList.add('recommended');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initLanguageSelector();
+
+            // Use stored preference, browser language, or default
+            const storedLang = localStorage.getItem('preferred-lang');
+            const detectedLang = storedLang || detectLanguage();
+            setLanguage(detectedLang);
+
+            detectOS();
+        });
+    </script>
+</body>
+</html>

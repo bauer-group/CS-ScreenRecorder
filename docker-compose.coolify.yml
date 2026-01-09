@@ -65,6 +65,9 @@ services:
       - CAP_VIDEOS_DEFAULT_PUBLIC=${CAP_VIDEOS_DEFAULT_PUBLIC:-false}
       - CAP_ALLOWED_SIGNUP_DOMAINS=${CAP_ALLOWED_SIGNUP_DOMAINS:-}
 
+      # -- Client Download Redirect --
+      - CAP_CLIENT_DOWNLOAD_URL=${CAP_CLIENT_DOWNLOAD_URL:-https://cap.so/download}
+
       # -- Email (Optional: SMTP or Resend) --
       - SMTP_HOST=${SMTP_HOST:-}
       - SMTP_PORT=${SMTP_PORT:-587}

@@ -7,7 +7,11 @@
 # - apps/web/middleware.ts (Next.js middleware for redirects)
 #
 # Redirects added:
-# - /download -> https://cap.so/download (302)
+# - /download -> ${CAP_CLIENT_DOWNLOAD_URL} (302)
+#   Default: https://cap.so/download
+#   Custom: Set CAP_CLIENT_DOWNLOAD_URL env var (e.g., to your own S3 bucket)
+# - /terms    -> https://go.bauer-group.com/screenrecorder-terms (302)
+# - /privacy  -> https://go.bauer-group.com/screenrecorder-privacy (302)
 #
 # Using middleware is more reliable than modifying next.config.ts because:
 # - Config files vary between Cap versions
@@ -34,11 +38,22 @@ echo ""
 
 # =============================================================================
 # Redirect code to inject (as a single block)
+# Uses environment variable at runtime for flexible configuration
 # =============================================================================
 REDIRECT_BLOCK='
   // === Custom redirects (added by 004-redirects.sh patch) ===
+  // Download redirect - uses CAP_CLIENT_DOWNLOAD_URL env var or defaults to cap.so
   if (request.nextUrl.pathname === "/download") {
-    return NextResponse.redirect(new URL("https://cap.so/download"), 302);
+    const downloadUrl = process.env.CAP_CLIENT_DOWNLOAD_URL || "https://cap.so/download";
+    return NextResponse.redirect(new URL(downloadUrl), 302);
+  }
+  // Terms of Service redirect
+  if (request.nextUrl.pathname === "/terms") {
+    return NextResponse.redirect(new URL("https://go.bauer-group.com/screenrecorder-terms"), 302);
+  }
+  // Privacy Policy redirect
+  if (request.nextUrl.pathname === "/privacy") {
+    return NextResponse.redirect(new URL("https://go.bauer-group.com/screenrecorder-privacy"), 302);
   }
   // === End custom redirects ==='
 
@@ -101,7 +116,14 @@ import type { NextRequest } from "next/server";
 // Custom redirect handler (added by 004-redirects.sh patch)
 function handleCustomRedirects(request: NextRequest): NextResponse | null {
   if (request.nextUrl.pathname === "/download") {
-    return NextResponse.redirect(new URL("https://cap.so/download"), 302);
+    const downloadUrl = process.env.CAP_CLIENT_DOWNLOAD_URL || "https://cap.so/download";
+    return NextResponse.redirect(new URL(downloadUrl), 302);
+  }
+  if (request.nextUrl.pathname === "/terms") {
+    return NextResponse.redirect(new URL("https://go.bauer-group.com/screenrecorder-terms"), 302);
+  }
+  if (request.nextUrl.pathname === "/privacy") {
+    return NextResponse.redirect(new URL("https://go.bauer-group.com/screenrecorder-privacy"), 302);
   }
   return null;
 }
@@ -126,21 +148,35 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * Custom redirects map (added by 004-redirects.sh patch)
- * Add entries here to redirect paths to external URLs
- * Format: { "/source-path": "https://destination.url" }
+ * Custom redirects (added by 004-redirects.sh patch)
+ *
+ * Environment variables:
+ * - CAP_CLIENT_DOWNLOAD_URL: Override default download URL
+ *   Default: https://cap.so/download
+ *   Example: https://assets.screenrecorder.app.bauer-group.com/clients
+ *
+ * Static redirects:
+ * - /terms   -> https://go.bauer-group.com/screenrecorder-terms
+ * - /privacy -> https://go.bauer-group.com/screenrecorder-privacy
  */
-const customRedirects: Record<string, string> = {
-  "/download": "https://cap.so/download",
-};
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check for custom redirects (302 temporary redirect)
-  const redirectUrl = customRedirects[pathname];
-  if (redirectUrl) {
-    return NextResponse.redirect(new URL(redirectUrl), 302);
+  // /download redirect - uses environment variable for flexibility
+  if (pathname === "/download") {
+    const downloadUrl = process.env.CAP_CLIENT_DOWNLOAD_URL || "https://cap.so/download";
+    return NextResponse.redirect(new URL(downloadUrl), 302);
+  }
+
+  // /terms redirect - Terms of Service
+  if (pathname === "/terms") {
+    return NextResponse.redirect(new URL("https://go.bauer-group.com/screenrecorder-terms"), 302);
+  }
+
+  // /privacy redirect - Privacy Policy
+  if (pathname === "/privacy") {
+    return NextResponse.redirect(new URL("https://go.bauer-group.com/screenrecorder-privacy"), 302);
   }
 
   // Continue with the request
@@ -151,6 +187,8 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     "/download",
+    "/terms",
+    "/privacy",
   ],
 };
 MIDDLEWARE_EOF
@@ -164,16 +202,30 @@ fi
 echo -e "${BLUE}[2/2] Verifying middleware...${NC}"
 
 if [ -f "$MIDDLEWARE_FILE" ]; then
-    if grep -q 'cap.so/download' "$MIDDLEWARE_FILE"; then
-        echo -e "${GREEN}  ✓ Verified: /download redirect is configured${NC}"
+    VERIFY_OK=true
 
-        # Show the relevant part of the file
-        echo -e "${BLUE}  Preview:${NC}"
-        grep -n "download" "$MIDDLEWARE_FILE" | head -5 | while read line; do
-            echo -e "    ${line}"
-        done
+    if grep -q 'cap.so/download' "$MIDDLEWARE_FILE"; then
+        echo -e "${GREEN}  ✓ /download redirect configured${NC}"
     else
-        echo -e "${RED}  ✗ Verification failed - redirect not found in middleware${NC}"
+        echo -e "${RED}  ✗ /download redirect missing${NC}"
+        VERIFY_OK=false
+    fi
+
+    if grep -q 'screenrecorder-terms' "$MIDDLEWARE_FILE"; then
+        echo -e "${GREEN}  ✓ /terms redirect configured${NC}"
+    else
+        echo -e "${RED}  ✗ /terms redirect missing${NC}"
+        VERIFY_OK=false
+    fi
+
+    if grep -q 'screenrecorder-privacy' "$MIDDLEWARE_FILE"; then
+        echo -e "${GREEN}  ✓ /privacy redirect configured${NC}"
+    else
+        echo -e "${RED}  ✗ /privacy redirect missing${NC}"
+        VERIFY_OK=false
+    fi
+
+    if [ "$VERIFY_OK" = false ]; then
         echo -e "${RED}    Manual intervention required${NC}"
         exit 1
     fi
@@ -191,5 +243,8 @@ echo -e "${GREEN}  Redirects patch complete!${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "Configured redirects (via middleware):"
-echo -e "  ${YELLOW}/download${NC} → https://cap.so/download (302)"
+echo -e "  ${YELLOW}/download${NC} → \${CAP_CLIENT_DOWNLOAD_URL} (302)"
+echo -e "            Default: https://cap.so/download"
+echo -e "  ${YELLOW}/terms${NC}    → https://go.bauer-group.com/screenrecorder-terms (302)"
+echo -e "  ${YELLOW}/privacy${NC}  → https://go.bauer-group.com/screenrecorder-privacy (302)"
 echo ""
