@@ -1,3 +1,26 @@
+# [0.2.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.1.0...v0.2.0) (2026-01-10)
+
+
+### Bug Fixes
+
+* Add HTTP to HTTPS redirect middleware for MinIO in Traefik configuration ([fe47364](https://github.com/bauer-group/CS-ScreenRecorder/commit/fe473640a43ee45557f297a82da3fee78c5b96fe))
+* Correct NextAuth secret length in secret generation script; ensure accurate entropy representation ([e368a4c](https://github.com/bauer-group/CS-ScreenRecorder/commit/e368a4c2ea49d6b33eb79de9033993d01f65d9bd))
+* Update environment variable comments for CloudFront and integrations in Docker Compose files ([d575670](https://github.com/bauer-group/CS-ScreenRecorder/commit/d57567067d449e9e28ef41dadd790d29e0f9fdcd))
+* Update healthcheck command and parameters in Docker Compose and Dockerfile for improved reliability ([3c082d2](https://github.com/bauer-group/CS-ScreenRecorder/commit/3c082d2e386ecd18ea18a2eca55f7fc8c8677e70))
+* Update secret generation to avoid special characters; enhance security for NextAuth and database secrets ([c78f95d](https://github.com/bauer-group/CS-ScreenRecorder/commit/c78f95d187142606a7d2b158bff3546102c30276))
+
+
+### Features
+
+* Add bucket manager script for managing MinIO/S3 buckets; enhance client download URL documentation ([da306ac](https://github.com/bauer-group/CS-ScreenRecorder/commit/da306ac2dacfa1df9f8558f1321d09c83b9a222b))
+* Add CAP_CLIENT_DOWNLOAD_URL to .env.example; update region for S3 client in setup and sync scripts; enhance redirect handling in middleware ([dfdc83a](https://github.com/bauer-group/CS-ScreenRecorder/commit/dfdc83a5c9793f7b51e51d3d82ad62018f60d698))
+* Add custom URL redirects middleware for Next.js application ([5f9c69b](https://github.com/bauer-group/CS-ScreenRecorder/commit/5f9c69bd5e9e26085842a5dc8438e31541e29dcb))
+* Add policy command to update IAM policies for MinIO users; enhance usage documentation ([88ab0ae](https://github.com/bauer-group/CS-ScreenRecorder/commit/88ab0aecf9e7ad76e7a0e5bc7470be792fb2145b))
+* Add scripts for setting up and syncing client download bucket on MinIO ([ca95119](https://github.com/bauer-group/CS-ScreenRecorder/commit/ca951198d446ef090b1d04fe075ff6e6235b89d0))
+* Update bucket naming and URL references; enhance HTML processing for downloads ([f119fcf](https://github.com/bauer-group/CS-ScreenRecorder/commit/f119fcf21ee44e1760bbfb5bc55cc513aa6f86f5))
+* Update S3 bucket name from 'videos' to 'media' across configuration files ([4929e7a](https://github.com/bauer-group/CS-ScreenRecorder/commit/4929e7a9f7e20abca5bf4532b24f1bafc8fa7a0f))
+* Update version numbers to cap-v0.4.1 in environment and Dockerfile; enhance sync script for CrabNebula CDN support ([3b8b195](https://github.com/bauer-group/CS-ScreenRecorder/commit/3b8b195fb116b33b50fd539cddc8c9cdfb9fadea))
+
 # [0.1.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.0.0...v0.1.0) (2026-01-09)
 
 
