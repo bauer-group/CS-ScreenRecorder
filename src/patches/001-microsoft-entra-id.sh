@@ -10,6 +10,8 @@
 # - apps/web/app/layout.tsx (pass flag to context)
 # - apps/web/app/(org)/login/form.tsx (add Microsoft button)
 # - apps/web/public/microsoft.svg (Microsoft logo)
+#
+# Compatible with Cap v0.4.x
 ###############################################################################
 
 set -e
@@ -21,43 +23,13 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m'
 
-APP_DIR="${APP_DIR:-/src}"
+APP_DIR="${APP_DIR:-/app}"
 PATCHES_DIR="${PATCHES_DIR:-/patches}"
 
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo -e "${BLUE}  Microsoft Entra ID (Azure AD) Authentication${NC}"
 echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
-
-# =============================================================================
-# Helper function to patch files using node
-# =============================================================================
-patch_file() {
-    local file="$1"
-    local search="$2"
-    local replace="$3"
-    local description="$4"
-
-    if [ ! -f "$file" ]; then
-        echo -e "${YELLOW}  • File not found: $file${NC}"
-        return 1
-    fi
-
-    if grep -qF "$search" "$file" 2>/dev/null; then
-        # Use node for reliable multi-line replacement
-        node -e "
-const fs = require('fs');
-const file = '$file';
-const search = \`$search\`;
-const replace = \`$replace\`;
-let content = fs.readFileSync(file, 'utf8');
-content = content.replace(search, replace);
-fs.writeFileSync(file, content);
-" 2>/dev/null && echo -e "${GREEN}  ✓ $description${NC}" || echo -e "${RED}  ✗ Failed: $description${NC}"
-    else
-        echo -e "${YELLOW}  • Already patched or pattern not found: $description${NC}"
-    fi
-}
 
 # =============================================================================
 # 1. Patch auth-options.ts - Add Azure AD Provider
@@ -67,30 +39,58 @@ echo -e "${BLUE}[1/6] Patching auth-options.ts...${NC}"
 AUTH_FILE="$APP_DIR/packages/database/auth/auth-options.ts"
 
 if [ -f "$AUTH_FILE" ]; then
-    # Check if already patched
     if grep -q "AzureADProvider" "$AUTH_FILE"; then
         echo -e "${YELLOW}  • AzureADProvider already exists${NC}"
     else
-        # Add import
-        sed -i 's/import GoogleProvider from "next-auth\/providers\/google";/import GoogleProvider from "next-auth\/providers\/google";\nimport AzureADProvider from "next-auth\/providers\/azure-ad";/' "$AUTH_FILE"
+        node << 'NODESCRIPT'
+const fs = require('fs');
+const file = process.env.APP_DIR + '/packages/database/auth/auth-options.ts';
 
-        # Create the provider config to insert (matching Google provider pattern)
-        AZURE_PROVIDER='    AzureADProvider({\n      clientId: serverEnv().AZURE_AD_CLIENT_ID!,\n      clientSecret: serverEnv().AZURE_AD_CLIENT_SECRET!,\n      tenantId: serverEnv().AZURE_AD_TENANT_ID || "common",\n      authorization: {\n        params: {\n          scope: "openid email profile",\n          prompt: "select_account",\n        },\n      },\n    }),'
+if (!fs.existsSync(file)) {
+    console.log('  ✗ auth-options.ts not found');
+    process.exit(1);
+}
 
-        # Insert after GoogleProvider block - find the pattern and insert after
-        # Using awk for multi-line insertion
-        awk -v azure="$AZURE_PROVIDER" '
-        /GoogleProvider\(\{/,/\}\),/ {
-            print
-            if (/\}\),/) {
-                printf "%s\n", azure
-            }
-            next
-        }
-        {print}
-        ' "$AUTH_FILE" > "$AUTH_FILE.tmp" && mv "$AUTH_FILE.tmp" "$AUTH_FILE"
+let content = fs.readFileSync(file, 'utf8');
 
-        echo -e "${GREEN}  ✓ Added AzureADProvider to auth-options.ts${NC}"
+// Add import for AzureADProvider after GoogleProvider import
+const googleImport = 'import GoogleProvider from "next-auth/providers/google";';
+const azureImport = 'import AzureADProvider from "next-auth/providers/azure-ad";';
+
+if (content.includes(googleImport) && !content.includes(azureImport)) {
+    content = content.replace(
+        googleImport,
+        googleImport + '\n' + azureImport
+    );
+    console.log('  ✓ Added AzureADProvider import');
+}
+
+// Add AzureADProvider configuration after GoogleProvider
+// Find GoogleProvider block and insert AzureADProvider after it
+const googleProviderRegex = /GoogleProvider\(\{[\s\S]*?\}\),/;
+const googleMatch = content.match(googleProviderRegex);
+
+if (googleMatch && !content.includes('AzureADProvider({')) {
+    const azureProvider = `
+    AzureADProvider({
+      clientId: serverEnv().AZURE_AD_CLIENT_ID!,
+      clientSecret: serverEnv().AZURE_AD_CLIENT_SECRET!,
+      tenantId: serverEnv().AZURE_AD_TENANT_ID || "common",
+      authorization: {
+        params: {
+          scope: "openid email profile",
+          prompt: "select_account",
+        },
+      },
+    }),`;
+
+    content = content.replace(googleMatch[0], googleMatch[0] + azureProvider);
+    console.log('  ✓ Added AzureADProvider configuration');
+}
+
+fs.writeFileSync(file, content);
+console.log('  ✓ auth-options.ts patched');
+NODESCRIPT
     fi
 else
     echo -e "${RED}  ✗ auth-options.ts not found${NC}"
@@ -107,9 +107,35 @@ if [ -f "$SERVER_ENV" ]; then
     if grep -q "AZURE_AD_CLIENT_ID" "$SERVER_ENV"; then
         echo -e "${YELLOW}  • Azure AD env vars already exist${NC}"
     else
-        # Add after GOOGLE_CLIENT_SECRET (matching the pattern in the file)
-        sed -i 's/GOOGLE_CLIENT_SECRET: z.string().optional(),/GOOGLE_CLIENT_SECRET: z.string().optional(),\n    \/\/\/ Microsoft Entra ID (Azure AD) Auth\n    AZURE_AD_CLIENT_ID: z.string().optional(),\n    AZURE_AD_CLIENT_SECRET: z.string().optional(),\n    AZURE_AD_TENANT_ID: z.string().optional(),/' "$SERVER_ENV"
-        echo -e "${GREEN}  ✓ Added Azure AD environment variables${NC}"
+        node << 'NODESCRIPT'
+const fs = require('fs');
+const file = process.env.APP_DIR + '/packages/env/server.ts';
+
+if (!fs.existsSync(file)) {
+    console.log('  ✗ server.ts not found');
+    process.exit(1);
+}
+
+let content = fs.readFileSync(file, 'utf8');
+
+// Add Azure AD env vars after GOOGLE_CLIENT_SECRET
+const googleSecret = 'GOOGLE_CLIENT_SECRET: z.string().optional(),';
+const azureEnvVars = `GOOGLE_CLIENT_SECRET: z.string().optional(),
+    // Microsoft Entra ID (Azure AD) Auth
+    AZURE_AD_CLIENT_ID: z.string().optional(),
+    AZURE_AD_CLIENT_SECRET: z.string().optional(),
+    AZURE_AD_TENANT_ID: z.string().optional(),`;
+
+if (content.includes(googleSecret) && !content.includes('AZURE_AD_CLIENT_ID')) {
+    content = content.replace(googleSecret, azureEnvVars);
+    fs.writeFileSync(file, content);
+    console.log('  ✓ Added Azure AD environment variables');
+} else if (content.includes('AZURE_AD_CLIENT_ID')) {
+    console.log('  • Azure AD env vars already exist');
+} else {
+    console.log('  ✗ Could not find insertion point');
+}
+NODESCRIPT
     fi
 else
     echo -e "${RED}  ✗ packages/env/server.ts not found${NC}"
@@ -126,8 +152,39 @@ if [ -f "$PUBLIC_ENV" ]; then
     if grep -q "microsoftAuthAvailable" "$PUBLIC_ENV"; then
         echo -e "${YELLOW}  • microsoftAuthAvailable already exists${NC}"
     else
-        sed -i 's/googleAuthAvailable: boolean;/googleAuthAvailable: boolean;\n  microsoftAuthAvailable: boolean;/' "$PUBLIC_ENV"
-        echo -e "${GREEN}  ✓ Added microsoftAuthAvailable type${NC}"
+        node << 'NODESCRIPT'
+const fs = require('fs');
+const file = process.env.APP_DIR + '/apps/web/utils/public-env.tsx';
+
+if (!fs.existsSync(file)) {
+    console.log('  ✗ public-env.tsx not found');
+    process.exit(1);
+}
+
+let content = fs.readFileSync(file, 'utf8');
+
+// Find googleAuthAvailable in type definition and add microsoftAuthAvailable
+// The pattern should match both tabs and spaces
+const typePattern = /(googleAuthAvailable:\s*boolean;)/;
+const match = content.match(typePattern);
+
+if (match && !content.includes('microsoftAuthAvailable')) {
+    // Detect indentation (tab or spaces)
+    const lineMatch = content.match(/^(\s*)googleAuthAvailable:/m);
+    const indent = lineMatch ? lineMatch[1] : '\t';
+
+    content = content.replace(
+        match[1],
+        match[1] + '\n' + indent + 'microsoftAuthAvailable: boolean;'
+    );
+    fs.writeFileSync(file, content);
+    console.log('  ✓ Added microsoftAuthAvailable type');
+} else if (content.includes('microsoftAuthAvailable')) {
+    console.log('  • microsoftAuthAvailable already exists');
+} else {
+    console.log('  ✗ Could not find googleAuthAvailable pattern');
+}
+NODESCRIPT
     fi
 else
     echo -e "${YELLOW}  • public-env.tsx not found${NC}"
@@ -144,8 +201,47 @@ if [ -f "$LAYOUT" ]; then
     if grep -q "microsoftAuthAvailable" "$LAYOUT"; then
         echo -e "${YELLOW}  • microsoftAuthAvailable already in layout${NC}"
     else
-        sed -i 's/googleAuthAvailable: !!serverEnv().GOOGLE_CLIENT_ID,/googleAuthAvailable: !!serverEnv().GOOGLE_CLIENT_ID,\n        microsoftAuthAvailable: !!serverEnv().AZURE_AD_CLIENT_ID,/' "$LAYOUT"
-        echo -e "${GREEN}  ✓ Added microsoftAuthAvailable to layout context${NC}"
+        node << 'NODESCRIPT'
+const fs = require('fs');
+const file = process.env.APP_DIR + '/apps/web/app/layout.tsx';
+
+if (!fs.existsSync(file)) {
+    console.log('  ✗ layout.tsx not found');
+    process.exit(1);
+}
+
+let content = fs.readFileSync(file, 'utf8');
+
+// Find googleAuthAvailable assignment and add microsoftAuthAvailable
+// Pattern matches: googleAuthAvailable: !!serverEnv().GOOGLE_CLIENT_ID,
+const assignPattern = /(googleAuthAvailable:\s*!!serverEnv\(\)\.GOOGLE_CLIENT_ID,)/;
+const match = content.match(assignPattern);
+
+if (match && !content.includes('microsoftAuthAvailable')) {
+    // Detect indentation
+    const lineMatch = content.match(/^(\s*)googleAuthAvailable:/m);
+    const indent = lineMatch ? lineMatch[1] : '\t\t';
+
+    content = content.replace(
+        match[1],
+        match[1] + '\n' + indent + 'microsoftAuthAvailable: !!serverEnv().AZURE_AD_CLIENT_ID,'
+    );
+    fs.writeFileSync(file, content);
+    console.log('  ✓ Added microsoftAuthAvailable to layout context');
+} else if (content.includes('microsoftAuthAvailable')) {
+    console.log('  • microsoftAuthAvailable already exists');
+} else {
+    console.log('  ✗ Could not find googleAuthAvailable pattern in layout');
+    console.log('  Searching for alternative patterns...');
+
+    // Try alternative pattern (different whitespace)
+    const altPattern = /googleAuthAvailable:.*GOOGLE_CLIENT_ID.*,/;
+    const altMatch = content.match(altPattern);
+    if (altMatch) {
+        console.log('  Found alternative pattern: ' + altMatch[0].substring(0, 50) + '...');
+    }
+}
+NODESCRIPT
     fi
 else
     echo -e "${YELLOW}  • layout.tsx not found${NC}"
@@ -162,24 +258,25 @@ if [ -f "$LOGIN_FORM" ]; then
     if grep -q "handleMicrosoftSignIn" "$LOGIN_FORM"; then
         echo -e "${YELLOW}  • Microsoft sign-in already exists${NC}"
     else
-        # Add the handler function after handleGoogleSignIn
-        # This is complex, so we'll use a heredoc with node
         node << 'NODESCRIPT'
 const fs = require('fs');
 const file = process.env.APP_DIR + '/apps/web/app/(org)/login/form.tsx';
 
 if (!fs.existsSync(file)) {
-    console.log('  • Login form not found');
-    process.exit(0);
+    console.log('  ✗ Login form not found');
+    process.exit(1);
 }
 
 let content = fs.readFileSync(file, 'utf8');
+let modified = false;
 
-// Add handler function (matching Google handler pattern exactly)
-const handlerPattern = /const handleGoogleSignIn = \(\) => \{[\s\S]*?signIn\("google"[\s\S]*?\}\);[\s\n\t]*\};/;
+// === Add handler function ===
+// Find handleGoogleSignIn function and add handleMicrosoftSignIn after it
+const handlerPattern = /const\s+handleGoogleSignIn\s*=\s*\(\)\s*=>\s*\{[\s\S]*?signIn\s*\(\s*["']google["'][\s\S]*?\}\s*\)\s*;\s*\}\s*;/;
 const handlerMatch = content.match(handlerPattern);
 
-if (handlerMatch) {
+if (handlerMatch && !content.includes('handleMicrosoftSignIn')) {
+    // Use same indentation style as Google handler
     const microsoftHandler = `
 
   const handleMicrosoftSignIn = () => {
@@ -191,12 +288,16 @@ if (handlerMatch) {
 
     content = content.replace(handlerMatch[0], handlerMatch[0] + microsoftHandler);
     console.log('  ✓ Added handleMicrosoftSignIn handler');
+    modified = true;
+} else if (content.includes('handleMicrosoftSignIn')) {
+    console.log('  • handleMicrosoftSignIn already exists');
 } else {
-    console.log('  • Could not match Google handler pattern, trying alternative...');
-    // Fallback: simpler pattern
-    if (content.includes('handleGoogleSignIn') && !content.includes('handleMicrosoftSignIn')) {
-        const insertPoint = content.indexOf('const handleGoogleSignIn');
-        const endOfHandler = content.indexOf('};', insertPoint) + 2;
+    // Fallback: Try simpler pattern
+    console.log('  • Primary pattern not found, trying fallback...');
+    const simplePattern = /const handleGoogleSignIn[\s\S]*?};/;
+    const simpleMatch = content.match(simplePattern);
+
+    if (simpleMatch && !content.includes('handleMicrosoftSignIn')) {
         const microsoftHandler = `
 
   const handleMicrosoftSignIn = () => {
@@ -204,16 +305,18 @@ if (handlerMatch) {
       callbackUrl: "/dashboard",
     });
   };`;
-        content = content.slice(0, endOfHandler) + microsoftHandler + content.slice(endOfHandler);
-        console.log('  ✓ Added handleMicrosoftSignIn (fallback method)');
+        content = content.replace(simpleMatch[0], simpleMatch[0] + microsoftHandler);
+        console.log('  ✓ Added handleMicrosoftSignIn (fallback)');
+        modified = true;
     }
 }
 
-// Add Microsoft button after Google button (matching exact structure)
-const googleButtonPattern = /\{publicEnv\.googleAuthAvailable && !oauthError && \([\s\S]*?Login with Google[\s\S]*?<\/MotionButton>[\s\n\t]*\)\}/;
-const buttonMatch = content.match(googleButtonPattern);
+// === Add Microsoft button ===
+// Find Google button and add Microsoft button after it
+const buttonPattern = /\{publicEnv\.googleAuthAvailable\s*&&\s*!oauthError\s*&&\s*\([\s\S]*?Login with Google[\s\S]*?<\/MotionButton>[\s\S]*?\)\}/;
+const buttonMatch = content.match(buttonPattern);
 
-if (buttonMatch) {
+if (buttonMatch && !content.includes('microsoftAuthAvailable')) {
     const microsoftButton = `
         {publicEnv.microsoftAuthAvailable && !oauthError && (
           <MotionButton
@@ -229,13 +332,29 @@ if (buttonMatch) {
         )}`;
 
     content = content.replace(buttonMatch[0], buttonMatch[0] + microsoftButton);
-    console.log('  ✓ Added Microsoft button');
+    console.log('  ✓ Added Microsoft login button');
+    modified = true;
+} else if (content.includes('microsoftAuthAvailable')) {
+    console.log('  • Microsoft button already exists');
 } else {
-    console.log('  • Could not match Google button pattern');
+    console.log('  ✗ Could not find Google button pattern');
+
+    // Debug: show what we're looking for
+    if (content.includes('googleAuthAvailable')) {
+        console.log('  Found googleAuthAvailable in file');
+        const lines = content.split('\n');
+        for (let i = 0; i < lines.length; i++) {
+            if (lines[i].includes('googleAuthAvailable')) {
+                console.log('  Line ' + (i+1) + ': ' + lines[i].substring(0, 60));
+            }
+        }
+    }
 }
 
-fs.writeFileSync(file, content);
-console.log('  ✓ Added Microsoft sign-in button');
+if (modified) {
+    fs.writeFileSync(file, content);
+    console.log('  ✓ Login form patched');
+}
 NODESCRIPT
     fi
 else
