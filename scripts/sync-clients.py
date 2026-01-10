@@ -59,7 +59,7 @@ except ImportError:
 console = Console()
 
 # Configuration
-BUCKET_NAME = "clients"
+BUCKET_NAME = "downloads"
 GITHUB_REPO = "CapSoftware/Cap"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 

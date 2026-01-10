@@ -3,14 +3,15 @@
 Setup Client Download Bucket for Screen Recorder
 =================================================
 
-This script creates and configures the public 'clients' bucket on MinIO
+This script creates and configures the public 'downloads' bucket on MinIO
 for hosting client downloads.
 
 Features:
-- Creates 'clients' bucket if it doesn't exist
+- Creates 'downloads' bucket if it doesn't exist
 - Sets public read policy for anonymous access
 - Uploads/updates the download page (index.html)
 - Uploads favicon and logo assets
+- Replaces logo link with WEB_URL for proper navigation
 
 Usage:
     python3 setup-client-bucket.py
@@ -19,6 +20,7 @@ Environment Variables (from .env):
     S3_HOSTNAME          - MinIO hostname (e.g., assets.screenrecorder.app.bauer-group.com)
     MINIO_ROOT_USER      - MinIO admin username
     MINIO_ROOT_PASSWORD  - MinIO admin password
+    WEB_URL              - Main application URL (for logo link in download page)
 
 Run from tools container:
     docker compose -f docker-compose.tools.yml run --rm tools python3 /workspace/scripts/setup-client-bucket.py
@@ -44,7 +46,7 @@ except ImportError:
 console = Console()
 
 # Configuration
-BUCKET_NAME = "clients"
+BUCKET_NAME = "downloads"
 ASSETS_DIR = Path("/workspace/assets")
 HTML_FILE = ASSETS_DIR / "download-page.html"
 
@@ -150,6 +152,27 @@ def set_bucket_policy(s3_client):
         return False
 
 
+def process_html_template(html_content: str) -> str:
+    """
+    Process HTML template by replacing placeholders with environment values.
+
+    Placeholders:
+    - {WEB_URL} -> Main application URL from environment
+    """
+    web_url = os.environ.get('WEB_URL', '')
+
+    if web_url:
+        # Replace {WEB_URL} placeholder with actual URL
+        html_content = html_content.replace('{WEB_URL}', web_url)
+        console.print(f"[green]✓[/green] Replaced {{WEB_URL}} placeholder with: {web_url}")
+    else:
+        # Fallback to "/" if WEB_URL not set
+        html_content = html_content.replace('{WEB_URL}', '/')
+        console.print("[yellow]![/yellow] WEB_URL not set - using '/' as fallback")
+
+    return html_content
+
+
 def upload_file(s3_client, local_path: Path, s3_key: str, content_type: str = None):
     """Upload a file to the bucket."""
     if not local_path.exists():
@@ -185,6 +208,31 @@ def upload_file(s3_client, local_path: Path, s3_key: str, content_type: str = No
             BUCKET_NAME,
             s3_key,
             ExtraArgs=extra_args
+        )
+        console.print(f"[green]✓[/green] Uploaded: {s3_key}")
+        return True
+    except ClientError as e:
+        console.print(f"[red]✗[/red] Failed to upload {s3_key}: {e}")
+        return False
+
+
+def upload_html_with_replacements(s3_client, local_path: Path, s3_key: str):
+    """Upload HTML file after processing template replacements."""
+    if not local_path.exists():
+        console.print(f"[yellow]![/yellow] File not found: {local_path}")
+        return False
+
+    try:
+        # Read and process HTML
+        html_content = local_path.read_text(encoding='utf-8')
+        processed_html = process_html_template(html_content)
+
+        # Upload processed content
+        s3_client.put_object(
+            Bucket=BUCKET_NAME,
+            Key=s3_key,
+            Body=processed_html.encode('utf-8'),
+            ContentType='text/html; charset=utf-8'
         )
         console.print(f"[green]✓[/green] Uploaded: {s3_key}")
         return True
@@ -241,9 +289,9 @@ def main():
     # Step 3: Upload files
     console.print("\n[bold]Step 3: Upload assets[/bold]")
 
-    # Upload index.html
+    # Upload index.html (with WEB_URL replacement)
     if HTML_FILE.exists():
-        upload_file(s3_client, HTML_FILE, "index.html")
+        upload_html_with_replacements(s3_client, HTML_FILE, "index.html")
     else:
         console.print(f"[yellow]![/yellow] HTML file not found at {HTML_FILE}")
         console.print("[dim]  Create it at: assets/download-page.html[/dim]")
