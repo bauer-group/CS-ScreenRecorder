@@ -9,8 +9,12 @@ Features:
 - Copy bucket contents (same server or between servers)
 - Delete buckets
 - Create buckets with proper policies and user access
+- Update IAM policies for users (bucket access)
 
 Usage:
+    # List all buckets
+    python3 bucket-manager.py list
+
     # Copy bucket on same server
     python3 bucket-manager.py copy --source videos --target media
 
@@ -26,11 +30,17 @@ Usage:
     # Create a new bucket with standard config
     python3 bucket-manager.py create --bucket media
 
+    # Update user policy for bucket access (after bucket rename)
+    python3 bucket-manager.py policy --bucket media --user cap
+
 Environment Variables (from .env):
     S3_HOSTNAME          - MinIO hostname
     MINIO_ROOT_USER      - MinIO admin username
     MINIO_ROOT_PASSWORD  - MinIO admin password
     CAP_AWS_SECRET_KEY   - Service account secret key (for create command)
+
+Note: The 'policy' command requires the MinIO Client (mc) to be installed.
+      It is available in the tools container.
 
 Run from tools container:
     docker compose -f docker-compose.tools.yml run --rm tools python3 /workspace/scripts/bucket-manager.py <command>
@@ -40,6 +50,8 @@ import os
 import sys
 import json
 import argparse
+import subprocess
+import tempfile
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
@@ -507,6 +519,206 @@ def cmd_list(args):
     return 0
 
 
+def run_mc_command(cmd: list, description: str = None) -> tuple:
+    """
+    Run a MinIO mc CLI command.
+    Returns (success: bool, output: str)
+    """
+    load_env()
+
+    # Get credentials
+    endpoint = os.environ.get('S3_HOSTNAME', 'localhost:9000')
+    admin_user = os.environ.get('MINIO_ROOT_USER', 'admin')
+    admin_password = os.environ.get('MINIO_ROOT_PASSWORD', '')
+
+    # Determine protocol
+    if 'localhost' in endpoint or '127.0.0.1' in endpoint or ':9000' in endpoint:
+        protocol = 'http'
+    else:
+        protocol = 'https'
+
+    endpoint_url = f"{protocol}://{endpoint}"
+
+    # First, configure the mc alias
+    alias_cmd = ['mc', 'alias', 'set', 'minio', endpoint_url, admin_user, admin_password, '--api', 's3v4']
+
+    try:
+        result = subprocess.run(
+            alias_cmd,
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        if result.returncode != 0:
+            return False, f"Failed to configure mc alias: {result.stderr}"
+    except subprocess.TimeoutExpired:
+        return False, "mc alias command timed out"
+    except FileNotFoundError:
+        return False, "mc CLI not found. Please install MinIO Client (mc)"
+    except Exception as e:
+        return False, f"Error configuring mc alias: {e}"
+
+    # Now run the actual command
+    if description:
+        console.print(f"[dim]Running: {description}[/dim]")
+
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=60
+        )
+        if result.returncode == 0:
+            return True, result.stdout
+        else:
+            return False, result.stderr
+    except subprocess.TimeoutExpired:
+        return False, "Command timed out"
+    except Exception as e:
+        return False, f"Error running command: {e}"
+
+
+def cmd_policy(args):
+    """Update IAM policy for a MinIO user to access a specific bucket."""
+    console.print(Panel.fit(
+        "[bold orange1]Bucket Manager - Policy[/bold orange1]\n"
+        f"Bucket: [cyan]{args.bucket}[/cyan]\n"
+        f"User: [cyan]{args.user}[/cyan]",
+        border_style="orange1"
+    ))
+
+    load_env()
+
+    # Build the policy
+    policy_name = f"{args.user}-policy"
+
+    if args.policy_name:
+        policy_name = args.policy_name
+
+    console.print("\n[bold]Step 1: Creating policy document[/bold]")
+
+    policy_json = {
+        "Version": "2012-10-17",
+        "Statement": [
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:GetObject",
+                    "s3:PutObject",
+                    "s3:DeleteObject",
+                    "s3:AbortMultipartUpload",
+                    "s3:ListMultipartUploadParts"
+                ],
+                "Resource": f"arn:aws:s3:::{args.bucket}/*"
+            },
+            {
+                "Effect": "Allow",
+                "Action": [
+                    "s3:ListBucket",
+                    "s3:GetBucketLocation"
+                ],
+                "Resource": f"arn:aws:s3:::{args.bucket}"
+            }
+        ]
+    }
+
+    console.print(f"[green]✓[/green] Policy document created for bucket '{args.bucket}'")
+
+    # Create temporary policy file
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+        json.dump(policy_json, f, indent=2)
+        policy_file = f.name
+
+    try:
+        # Step 2: Check if user exists
+        console.print("\n[bold]Step 2: Checking user exists[/bold]")
+        success, output = run_mc_command(
+            ['mc', 'admin', 'user', 'info', 'minio', args.user],
+            f"mc admin user info minio {args.user}"
+        )
+
+        if not success:
+            console.print(f"[red]✗[/red] User '{args.user}' not found or error: {output}")
+            console.print("[dim]  Create the user first or check the username[/dim]")
+            return 1
+
+        console.print(f"[green]✓[/green] User '{args.user}' exists")
+
+        # Step 3: Remove old policy if it exists (we'll recreate it)
+        console.print("\n[bold]Step 3: Updating policy[/bold]")
+
+        # Try to remove existing policy first (ignore errors if it doesn't exist)
+        run_mc_command(
+            ['mc', 'admin', 'policy', 'detach', 'minio', policy_name, '--user', args.user],
+            f"Detaching old policy '{policy_name}' from user"
+        )
+
+        # Delete old policy (ignore errors)
+        run_mc_command(
+            ['mc', 'admin', 'policy', 'remove', 'minio', policy_name],
+            f"Removing old policy '{policy_name}'"
+        )
+
+        # Create new policy
+        success, output = run_mc_command(
+            ['mc', 'admin', 'policy', 'create', 'minio', policy_name, policy_file],
+            f"Creating policy '{policy_name}'"
+        )
+
+        if not success:
+            console.print(f"[red]✗[/red] Failed to create policy: {output}")
+            return 1
+
+        console.print(f"[green]✓[/green] Created policy '{policy_name}'")
+
+        # Step 4: Attach policy to user
+        console.print("\n[bold]Step 4: Attaching policy to user[/bold]")
+        success, output = run_mc_command(
+            ['mc', 'admin', 'policy', 'attach', 'minio', policy_name, '--user', args.user],
+            f"Attaching policy to user '{args.user}'"
+        )
+
+        if not success:
+            console.print(f"[red]✗[/red] Failed to attach policy: {output}")
+            return 1
+
+        console.print(f"[green]✓[/green] Attached policy to user '{args.user}'")
+
+        # Step 5: Verify
+        console.print("\n[bold]Step 5: Verifying configuration[/bold]")
+        success, output = run_mc_command(
+            ['mc', 'admin', 'user', 'info', 'minio', args.user],
+            f"Verifying user '{args.user}'"
+        )
+
+        if success:
+            console.print(f"[green]✓[/green] User configuration verified")
+            if args.verbose:
+                console.print(f"[dim]{output}[/dim]")
+
+    finally:
+        # Clean up temp file
+        try:
+            os.unlink(policy_file)
+        except Exception:
+            pass
+
+    # Summary
+    console.print(Panel.fit(
+        f"[bold green]Policy Updated![/bold green]\n\n"
+        f"User: [cyan]{args.user}[/cyan]\n"
+        f"Policy: [cyan]{policy_name}[/cyan]\n"
+        f"Bucket: [cyan]{args.bucket}[/cyan]\n\n"
+        f"User now has access to:\n"
+        f"  - [cyan]arn:aws:s3:::{args.bucket}/*[/cyan] (objects)\n"
+        f"  - [cyan]arn:aws:s3:::{args.bucket}[/cyan] (bucket)",
+        border_style="green"
+    ))
+
+    return 0
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Bucket Manager for Screen Recorder",
@@ -529,6 +741,9 @@ Examples:
 
   # Create a new bucket with public read
   python3 bucket-manager.py create --bucket media --public
+
+  # Update user policy for a bucket (after bucket rename)
+  python3 bucket-manager.py policy --bucket media --user cap
         """
     )
 
@@ -568,6 +783,13 @@ Examples:
     create_parser.add_argument('--service-key', help='Service user secret key (default: from CAP_AWS_SECRET_KEY)')
     create_parser.add_argument('--force', action='store_true', help='Reconfigure even if bucket exists')
 
+    # Policy command
+    policy_parser = subparsers.add_parser('policy', help='Update IAM policy for a user')
+    policy_parser.add_argument('--bucket', '-b', required=True, help='Bucket name to grant access to')
+    policy_parser.add_argument('--user', '-u', required=True, help='MinIO user name')
+    policy_parser.add_argument('--policy-name', '-p', help='Custom policy name (default: <user>-policy)')
+    policy_parser.add_argument('--verbose', '-v', action='store_true', help='Show detailed output')
+
     args = parser.parse_args()
 
     if not args.command:
@@ -584,6 +806,8 @@ Examples:
         return cmd_delete(args)
     elif args.command == 'create':
         return cmd_create(args)
+    elif args.command == 'policy':
+        return cmd_policy(args)
 
     return 0
 
