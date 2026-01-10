@@ -140,7 +140,7 @@ CS-ScreenRecorder/
 |---------|-------|
 | Database name | `cap` |
 | Database user | `cap` |
-| S3 bucket | `videos` |
+| S3 bucket | `media` |
 | S3 user | `cap` |
 | S3 region | `global` |
 

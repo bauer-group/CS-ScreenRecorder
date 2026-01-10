@@ -62,7 +62,7 @@ jobs:
           "MINIO_ROOT_PASSWORD": "ci-test-minio-password",
           "CAP_AWS_SECRET_KEY": "ci-test-s3-secret-key-40-characters-xx",
           "S3_PUBLIC_ENDPOINT": "https://assets.cap.example.com",
-          "CAP_AWS_BUCKET_URL": "https://assets.cap.example.com/videos",
+          "CAP_AWS_BUCKET_URL": "https://assets.cap.example.com/media",
           "CAP_VIDEOS_DEFAULT_PUBLIC": "true"
         }
 

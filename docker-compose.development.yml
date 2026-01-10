@@ -62,15 +62,15 @@ services:
       # -- Encryption --
       - DATABASE_ENCRYPTION_KEY=${DATABASE_ENCRYPTION_KEY:-}
 
-      # -- S3 Storage (static: bucket=videos, user=cap) --
-      - CAP_AWS_BUCKET=videos
+      # -- S3 Storage (static: bucket=media, user=cap) --
+      - CAP_AWS_BUCKET=media
       - CAP_AWS_REGION=global
       - CAP_AWS_ACCESS_KEY=cap
       - CAP_AWS_SECRET_KEY=${CAP_AWS_SECRET_KEY}
       - S3_PATH_STYLE=true
       - S3_INTERNAL_ENDPOINT=http://minio-server:9000
       - S3_PUBLIC_ENDPOINT=http://localhost:${EXPOSED_MINIO_API_PORT:-9000}
-      - CAP_AWS_BUCKET_URL=http://localhost:${EXPOSED_MINIO_API_PORT:-9000}/videos
+      - CAP_AWS_BUCKET_URL=http://localhost:${EXPOSED_MINIO_API_PORT:-9000}/media
 
       # -- Video Settings --
       - CAP_VIDEOS_DEFAULT_PUBLIC=${CAP_VIDEOS_DEFAULT_PUBLIC:-false}
@@ -212,10 +212,10 @@ services:
         mc alias set minio http://minio-server:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
 
         echo 'Ensuring bucket exists...'
-        mc mb --ignore-existing minio/videos
+        mc mb --ignore-existing minio/media
 
         echo 'Setting bucket policy to allow public read for video playback...'
-        mc anonymous set download minio/videos || true
+        mc anonymous set download minio/media || true
 
         echo 'Ensuring service user exists...'
         mc admin user info minio cap >/dev/null 2>&1 || \
@@ -235,7 +235,7 @@ services:
                 "s3:AbortMultipartUpload",
                 "s3:ListMultipartUploadParts"
               ],
-              "Resource": "arn:aws:s3:::videos/*"
+              "Resource": "arn:aws:s3:::media/*"
             },
             {
               "Effect": "Allow",
@@ -243,7 +243,7 @@ services:
                 "s3:ListBucket",
                 "s3:GetBucketLocation"
               ],
-              "Resource": "arn:aws:s3:::videos"
+              "Resource": "arn:aws:s3:::media"
             }
           ]
         }
