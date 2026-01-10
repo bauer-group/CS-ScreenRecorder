@@ -44,8 +44,8 @@ echo -e "${BLUE}Generating secrets...${NC}"
 # Note: We avoid special characters (+, /, =, $, etc.) in secrets
 # to prevent shell escaping issues in docker-compose and scripts.
 
-# NextAuth secret (alphanumeric, 44 chars - equivalent entropy to base64 32 bytes)
-NEXTAUTH_SECRET=$(openssl rand -base64 48 | tr -dc 'a-zA-Z0-9' | head -c 44)
+# NextAuth secret (alphanumeric, 43 chars = ~256 bits entropy)
+NEXTAUTH_SECRET=$(openssl rand -base64 48 | tr -dc 'a-zA-Z0-9' | head -c 43)
 
 # Database encryption key (32 byte hex string - hex is shell-safe)
 DATABASE_ENCRYPTION_KEY=$(openssl rand -hex 32)
