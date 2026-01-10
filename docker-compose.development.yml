@@ -217,8 +217,8 @@ services:
         echo 'Setting bucket policy to allow public read for video playback...'
         mc anonymous set download minio/media || true
 
-        echo 'Ensuring service user exists...'
-        mc admin user info minio cap >/dev/null 2>&1 || \
+        echo 'Ensuring service user with current password...'
+        mc admin user remove minio cap 2>/dev/null || true
         mc admin user add minio cap "$CAP_AWS_SECRET_KEY"
 
         echo 'Creating bucket access policy for service user...'
