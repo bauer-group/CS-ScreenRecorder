@@ -29,6 +29,9 @@ services:
     # Option 2: Use pre-built branded image from GHCR
     # image: ghcr.io/bauer-group/cs-screenrecorder/screen-recorder:latest
 
+    # Option 3: Use official Cap image from GHCR
+    # image: ghcr.io/capsoftware/cap-web:latest
+
     restart: unless-stopped
     container_name: ${STACK_NAME:-SCREENRECORDER}_APP
     depends_on:
@@ -48,6 +51,9 @@ services:
         max-size: "50m"
         max-file: "3"
     environment:
+      # -- Debugging --     
+
+      # -- Time Zone --
       - TZ=${TIME_ZONE:-Etc/UTC}
 
       # -- Core Settings --
