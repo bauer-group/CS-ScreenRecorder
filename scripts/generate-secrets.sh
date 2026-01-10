@@ -41,20 +41,23 @@ fi
 # Generate secrets
 echo -e "${BLUE}Generating secrets...${NC}"
 
-# NextAuth secret (32 byte base64 string)
-NEXTAUTH_SECRET=$(openssl rand -base64 32)
+# Note: We avoid special characters (+, /, =, $, etc.) in secrets
+# to prevent shell escaping issues in docker-compose and scripts.
 
-# Database encryption key (32 byte hex string)
+# NextAuth secret (alphanumeric, 44 chars - equivalent entropy to base64 32 bytes)
+NEXTAUTH_SECRET=$(openssl rand -base64 48 | tr -dc 'a-zA-Z0-9' | head -c 44)
+
+# Database encryption key (32 byte hex string - hex is shell-safe)
 DATABASE_ENCRYPTION_KEY=$(openssl rand -hex 32)
 
 # Database password (alphanumeric, 32 chars)
-DATABASE_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
+DATABASE_PASSWORD=$(openssl rand -base64 48 | tr -dc 'a-zA-Z0-9' | head -c 32)
 
 # MinIO root password (alphanumeric, 32 chars)
-MINIO_ROOT_PASSWORD=$(openssl rand -base64 32 | tr -dc 'a-zA-Z0-9' | head -c 32)
+MINIO_ROOT_PASSWORD=$(openssl rand -base64 48 | tr -dc 'a-zA-Z0-9' | head -c 32)
 
-# Cap S3 secret key (alphanumeric, 40 chars - AWS style)
-CAP_AWS_SECRET_KEY=$(openssl rand -base64 40 | tr -dc 'a-zA-Z0-9+/' | head -c 40)
+# Cap S3 secret key (alphanumeric, 40 chars - AWS style, shell-safe)
+CAP_AWS_SECRET_KEY=$(openssl rand -base64 60 | tr -dc 'a-zA-Z0-9' | head -c 40)
 
 echo -e "${GREEN}Secrets generated successfully!${NC}"
 echo ""
