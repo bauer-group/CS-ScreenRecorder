@@ -1,0 +1,12 @@
+{
+  "name": "redirects-patch",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AST-based patch to add custom URL redirects via Next.js middleware",
+  "scripts": {
+    "patch": "node index.mjs"
+  },
+  "dependencies": {
+    "ts-morph": "^24.0.0"
+  }
+}
