@@ -1,0 +1,12 @@
+{
+  "name": "smtp-email-patch",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "AST-based patch to add SMTP email support to Cap",
+  "scripts": {
+    "patch": "node index.mjs"
+  },
+  "dependencies": {
+    "ts-morph": "^24.0.0"
+  }
+}

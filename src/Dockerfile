@@ -96,9 +96,10 @@ WORKDIR /app
 COPY --from=patcher /app .
 
 # Install dependencies with pnpm cache
+# Note: Using --no-frozen-lockfile because patches may add dependencies (e.g., nodemailer)
 RUN corepack enable pnpm
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
-    pnpm i --frozen-lockfile
+    pnpm i --no-frozen-lockfile
 
 ARG NEXT_PUBLIC_DOCKER_BUILD=true
 
