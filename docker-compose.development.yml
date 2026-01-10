@@ -51,13 +51,28 @@ services:
         max-size: "50m"
         max-file: "3"
     environment:
-      # -- Debugging --     
+      # -- Debugging (Maximum) --
+      - NODE_ENV=development
+      - DEBUG=*
+      - LOG_LEVEL=debug
+      - NEXT_DEBUG=true
+      # AWS SDK v3 debugging
+      - AWS_SDK_LOG_LEVEL=debug
+      - AWS_SDK_JS_SUPPRESS_MAINTENANCE_MODE_MESSAGE=1
+      # Node.js debugging
+      - NODE_DEBUG=*
+      - NODE_OPTIONS=--enable-source-maps --trace-warnings --trace-uncaught
+      # Effect-TS debugging
+      - EFFECT_LOG_LEVEL=All
+      - EFFECT_TRACE=1
+      # Next.js verbose
+      - NEXT_TELEMETRY_DISABLED=1
 
       # -- Time Zone --
       - TZ=${TIME_ZONE:-Etc/UTC}
 
       # -- Core Settings --
-      - NODE_ENV=${NODE_ENV:-development}
+      # - NODE_ENV=${NODE_ENV:-development}
       - WEB_URL=${WEB_URL:-http://localhost:3000}
       - NEXTAUTH_URL=${WEB_URL:-http://localhost:3000}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
