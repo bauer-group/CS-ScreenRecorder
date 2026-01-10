@@ -1,3 +1,17 @@
+# [0.3.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.2.0...v0.3.0) (2026-01-10)
+
+
+### Bug Fixes
+
+* Update CAP_VERSION to cap-v0.4.1 in configuration files ([4120c7a](https://github.com/bauer-group/CS-ScreenRecorder/commit/4120c7a6efbf929845ab9a3045dadaf67295f29c))
+* Update user existence check to ensure current password is used in MinIO configuration scripts ([511bf7c](https://github.com/bauer-group/CS-ScreenRecorder/commit/511bf7c00bb40a2d90247258b76750824018566f))
+
+
+### Features
+
+* Update CAP_VERSION to cap-v0.4.2 in docker-compose; add Microsoft Entra ID authentication patch ([698c374](https://github.com/bauer-group/CS-ScreenRecorder/commit/698c37463ea1c077fb1f37b8c8ccbc1bb67db194))
+* Update CAP_VERSION to cap-v0.4.2 in Dockerfile ([8a142a5](https://github.com/bauer-group/CS-ScreenRecorder/commit/8a142a5431b5083e53f33063a2fe82b9deb59350))
+
 # [0.2.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.1.0...v0.2.0) (2026-01-10)
 
 
