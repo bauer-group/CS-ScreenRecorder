@@ -229,6 +229,8 @@ To use Cap Desktop with your self-hosted instance:
 2. Set "Cap Server URL" to your deployment URL
 3. Login and start recording
 
+See detailed instructions: [English](docs/DESKTOP-APP-SELF-HOST.md) | [Deutsch](docs/DESKTOP-APP-SELF-HOST-DE.md)
+
 ## Backup & Restore
 
 ### Backup
