@@ -23,7 +23,7 @@
 # -----------------------------------------------------------------------------
 # Build Arguments
 # -----------------------------------------------------------------------------
-ARG CAP_VERSION=cap-v0.4.1
+ARG CAP_VERSION=cap-v0.3.83
 ARG NODE_VERSION=24
 ARG INCLUDE_BRANDING=true
 
@@ -100,14 +100,18 @@ RUN corepack enable pnpm
 RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
     pnpm i --frozen-lockfile
 
-# Build arguments for Next.js (matches official Cap Dockerfile + GitHub Actions)
-# 1. ARG/ENV from Dockerfile
 ARG NEXT_PUBLIC_DOCKER_BUILD=true
-ENV NEXT_PUBLIC_WEB_URL=http://localhost:3000
 
-# 2. .env file that GitHub Actions creates before build (needed because we git clone)
-RUN echo "WEB_URL=http://localhost:3000" > .env && \
-    echo "NEXT_PUBLIC_DOCKER_BUILD=true" >> .env
+# Build-time environment (required by @cap/env validation)
+# These are placeholder values - real values come from container runtime environment
+ENV NEXT_PUBLIC_WEB_URL="http://localhost:3000" \
+    WEB_URL="http://localhost:3000" \
+    DATABASE_URL="mysql://build:build@localhost:3306/cap" \
+    NEXTAUTH_SECRET="build-time-placeholder-secret-32chars" \
+    NEXTAUTH_URL="http://localhost:3000" \
+    CAP_AWS_BUCKET="build-bucket" \
+    CAP_AWS_REGION="global" \
+    NODE_ENV="production"
 
 # Build the web application
 RUN pnpm run build:web

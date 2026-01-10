@@ -94,7 +94,7 @@ else
     if (pathname === "/download" && !redirectUrl) {
       // Let Cap handle the default /download page
     } else {
-      return NextResponse.redirect(redirectUrl, { status: 308 });
+      return NextResponse.redirect(redirectUrl, { status: 302 });
     }
   }
   // === End custom redirects ==='
@@ -120,7 +120,7 @@ else
             print "  const redirectUrl = customRedirects[pathname];"
             print "  "
             print "  if (redirectUrl) {"
-            print "    return NextResponse.redirect(redirectUrl, { status: 308 });"
+            print "    return NextResponse.redirect(redirectUrl, { status: 302 });"
             print "  }"
             print "  // === End custom redirects ==="
             print ""
@@ -176,7 +176,7 @@ echo -e "${GREEN}  Redirects patch complete!${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo -e "Configured redirects (via middleware):"
-echo -e "  ${YELLOW}/terms${NC}    → https://go.bauer-group.com/screenrecorder-terms (308)"
-echo -e "  ${YELLOW}/privacy${NC}  → https://go.bauer-group.com/screenrecorder-privacy (308)"
-echo -e "  ${YELLOW}/download${NC} → CAP_CLIENT_DOWNLOAD_URL environment variable (308)"
+echo -e "  ${YELLOW}/terms${NC}    → https://go.bauer-group.com/screenrecorder-terms (302)"
+echo -e "  ${YELLOW}/privacy${NC}  → https://go.bauer-group.com/screenrecorder-privacy (302)"
+echo -e "  ${YELLOW}/download${NC} → CAP_CLIENT_DOWNLOAD_URL environment variable (302)"
 echo ""

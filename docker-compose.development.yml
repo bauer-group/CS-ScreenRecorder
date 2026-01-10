@@ -24,7 +24,7 @@ services:
       context: ./src
       dockerfile: Dockerfile
       args:
-        CAP_VERSION: ${CAP_VERSION:-cap-v0.4.1}
+        CAP_VERSION: ${CAP_VERSION:-cap-v0.3.83}
 
     # Option 2: Use pre-built branded image from GHCR
     # image: ghcr.io/bauer-group/cs-screenrecorder/screen-recorder:latest
@@ -51,7 +51,7 @@ services:
         max-size: "50m"
         max-file: "3"
     environment:
-      # -- Debugging (Maximum) --
+      # -- Debugging --
       - NODE_ENV=development
       - DEBUG=*
       - LOG_LEVEL=debug
