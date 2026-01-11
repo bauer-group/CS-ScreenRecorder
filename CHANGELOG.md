@@ -1,3 +1,15 @@
+## [0.3.1](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.3.0...v0.3.1) (2026-01-11)
+
+
+### Bug Fixes
+
+* Add options for using official Cap image in docker-compose ([2cf9fe7](https://github.com/bauer-group/CS-ScreenRecorder/commit/2cf9fe7f410fedd4ef0c9f1ec5bc1b8ad6eae1d7))
+* Enhance debugging options in docker-compose for development ([2c3fcd3](https://github.com/bauer-group/CS-ScreenRecorder/commit/2c3fcd382cf3cff9d5f17cfc625f4a93c132ed1f))
+* implement SMTP email support patch using AST-based modifications ([89f615b](https://github.com/bauer-group/CS-ScreenRecorder/commit/89f615b52fef04f73e1580048e6965ef41ae1629))
+* **patches:** implement AST-based patches for Microsoft Entra ID authentication and URL redirects ([4062930](https://github.com/bauer-group/CS-ScreenRecorder/commit/4062930007c6438b00780b0f904e7bc77b07b702))
+* Update CAP_VERSION to cap-v0.3.83 and adjust redirect status codes in middleware ([72118f8](https://github.com/bauer-group/CS-ScreenRecorder/commit/72118f80679a7b543bb800e99d6e8c924e34d252))
+* Update Dockerfile to align Next.js build arguments with official Cap Dockerfile ([d0f3ea9](https://github.com/bauer-group/CS-ScreenRecorder/commit/d0f3ea99e928a7121ebe1f504db2c8a957128907))
+
 # [0.3.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.2.0...v0.3.0) (2026-01-10)
 
 
