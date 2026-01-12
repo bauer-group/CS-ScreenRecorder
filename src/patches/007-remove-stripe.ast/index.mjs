@@ -152,32 +152,24 @@ async function main() {
     // =========================================================================
     // Strategy 3b: Fix organization seats/quota for self-hosted
     // =========================================================================
+    //
+    // Target file: apps/web/utils/organization.ts
+    // Actual code:
+    //   const inviteQuota = organization?.inviteQuota ?? 1;
+    //   const remainingSeats = buildEnv.NEXT_PUBLIC_IS_CAP
+    //       ? Math.max(0, inviteQuota - totalUsedSeats)
+    //       : Number.MAX_SAFE_INTEGER;
+    //
+    // Problem: organization?.inviteQuota is always undefined (field is on users table, not organizations)
+    // So inviteQuota defaults to 1, which shows "Seats Capacity: 1"
+    //
+    // Fix: Change default from 1 to 10000000
 
-    // Pattern: inviteQuota defaults to 1 - change to 10 million for self-hosted
-    // const inviteQuota = organization.inviteQuota ?? 1;
-    const inviteQuotaDefaultRegex = /(inviteQuota\s*=\s*(?:organization\.)?inviteQuota\s*\?\?\s*)1\s*;/g;
+    // Pattern: organization?.inviteQuota ?? 1 -> organization?.inviteQuota ?? 10000000
+    const inviteQuotaDefaultRegex = /(organization\??\.inviteQuota\s*\?\?\s*)1(\s*;)/g;
     if (inviteQuotaDefaultRegex.test(newContent)) {
-      // Use function replacement to avoid $1 + 10000000 being parsed as $110000000
-      newContent = newContent.replace(inviteQuotaDefaultRegex, (_, p1) => `${p1}10000000; /* [SELF-HOSTED] 10 million seats */`);
-      log.ok(`Set invite quota to 10 million in ${relativePath}`);
-      modified = true;
-    }
-
-    // Alternative: inviteQuota || 1 pattern
-    const inviteQuotaOrRegex = /(inviteQuota\s*=\s*(?:organization\.)?inviteQuota\s*\|\|\s*)1\s*;/g;
-    if (inviteQuotaOrRegex.test(newContent)) {
-      // Use function replacement to avoid $1 + 10000000 being parsed as $110000000
-      newContent = newContent.replace(inviteQuotaOrRegex, (_, p1) => `${p1}10000000; /* [SELF-HOSTED] 10 million seats */`);
-      log.ok(`Set invite quota to 10 million (|| pattern) in ${relativePath}`);
-      modified = true;
-    }
-
-    // Pattern: NEXT_PUBLIC_IS_CAP check for seats - make it always use 10 million
-    // remainingSeats = buildEnv.NEXT_PUBLIC_IS_CAP ? Math.max(...) : Number.MAX_SAFE_INTEGER
-    const isCapSeatsCheckRegex = /buildEnv\.NEXT_PUBLIC_IS_CAP\s*\?\s*Math\.max\s*\(\s*0\s*,\s*inviteQuota\s*-\s*totalUsedSeats\s*\)\s*:\s*Number\.MAX_SAFE_INTEGER/g;
-    if (isCapSeatsCheckRegex.test(newContent)) {
-      newContent = newContent.replace(isCapSeatsCheckRegex, '10000000 /* [SELF-HOSTED] 10 million seats */');
-      log.ok(`Set remaining seats to 10 million in ${relativePath}`);
+      newContent = newContent.replace(inviteQuotaDefaultRegex, (_, p1, p2) => `${p1}10000000${p2} /* [SELF-HOSTED] 10 million seats */`);
+      log.ok(`Set invite quota default to 10 million in ${relativePath}`);
       modified = true;
     }
 
