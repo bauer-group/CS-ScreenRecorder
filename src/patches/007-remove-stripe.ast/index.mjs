@@ -6,9 +6,8 @@
  * - Neutralizes Stripe SDK imports and API calls
  * - Makes subscription checks return "active" status (all features unlocked)
  * - Hides upgrade prompts and pricing UI
- *
- * This is a SAFE patch - it comments out code rather than deleting it,
- * making it easy to revert if needed.
+ * - Simulates an "unlimited Pro license" by making all relevant checks return
+ * 
  */
 
 import fs from 'fs';
