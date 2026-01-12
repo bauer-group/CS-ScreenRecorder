@@ -1,3 +1,13 @@
+## [0.4.7](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.6...v0.4.7) (2026-01-12)
+
+
+### Bug Fixes
+
+* improve MinIO readiness check in Docker Compose files ([bb2e7d4](https://github.com/bauer-group/CS-ScreenRecorder/commit/bb2e7d4ac95fb2f5b7a041239d0713b231e3e9fa))
+* remove default MINIO_REGION assignment in Docker Compose files for clarity ([222ea3b](https://github.com/bauer-group/CS-ScreenRecorder/commit/222ea3bc3746eaf8f806072820da7e62d8e48e75))
+* rename MINIO_REGION to MINIO_SITE_REGION and add MINIO_SITE_NAME for clarity ([f119716](https://github.com/bauer-group/CS-ScreenRecorder/commit/f119716adbc642dd245c2f1161fc9d5bef239483))
+* update S3 region configuration to use environment variable for flexibility ([5d58704](https://github.com/bauer-group/CS-ScreenRecorder/commit/5d5870420a3227ad0653cbf6c4e229c9d8f784ed))
+
 ## [0.4.6](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.5...v0.4.6) (2026-01-12)
 
 
