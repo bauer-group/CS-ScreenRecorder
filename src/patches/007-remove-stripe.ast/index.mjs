@@ -138,17 +138,11 @@ async function main() {
       modified = true;
     }
 
-    // Pattern: Organization invite subscription check
-    // if (!organizationOwner || !organizationOwner.stripeSubscriptionId)
-    const orgOwnerSubCheckRegex = /if\s*\(\s*!organizationOwner\s*\|\|\s*!organizationOwner\.stripeSubscriptionId\s*\)\s*\{[^}]*"Organization owner not found or has no subscription"[^}]*\}/gs;
-    if (orgOwnerSubCheckRegex.test(newContent)) {
-      newContent = newContent.replace(orgOwnerSubCheckRegex, '/* [SELF-HOSTED] Organization subscription check disabled */');
-      log.ok(`Disabled organization invite subscription check in ${relativePath}`);
-      modified = true;
-    }
-
-    // Alternative pattern for stripeSubscriptionId checks in invite flow
-    const stripeSubIdCheckRegex = /!organizationOwner\.stripeSubscriptionId/g;
+    // Pattern: stripeSubscriptionId checks in invite flow
+    // Only replace the NEGATED check (!organizationOwner.stripeSubscriptionId) with false
+    // Do NOT replace positive usages - those are actual value assignments that need the real value
+    // Handles both regular access (.) and optional chaining (?.)
+    const stripeSubIdCheckRegex = /!organizationOwner\??\.stripeSubscriptionId/g;
     if (stripeSubIdCheckRegex.test(newContent)) {
       newContent = newContent.replace(stripeSubIdCheckRegex, 'false /* [SELF-HOSTED] subscription not required */');
       log.ok(`Bypassed stripeSubscriptionId check in ${relativePath}`);
