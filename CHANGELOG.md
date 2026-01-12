@@ -1,3 +1,10 @@
+## [0.4.2](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.1...v0.4.2) (2026-01-12)
+
+
+### Bug Fixes
+
+* **patches:** update invite quota handling to use function replacement for self-hosted deployments ([f8cc449](https://github.com/bauer-group/CS-ScreenRecorder/commit/f8cc44980e8ca3e4841754e3a2ce8a4c16d1100d))
+
 ## [0.4.1](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.0...v0.4.1) (2026-01-12)
 
 
