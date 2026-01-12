@@ -1,3 +1,10 @@
+## [0.4.3](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.2...v0.4.3) (2026-01-12)
+
+
+### Bug Fixes
+
+* **patches:** refine organization invite subscription check handling for self-hosted deployments ([7ad1a07](https://github.com/bauer-group/CS-ScreenRecorder/commit/7ad1a07166ecf4ced9cf370df2348fd47db7f22a))
+
 ## [0.4.2](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.1...v0.4.2) (2026-01-12)
 
 
