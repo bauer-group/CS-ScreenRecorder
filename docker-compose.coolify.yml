@@ -236,7 +236,6 @@ services:
         set -e
 
         echo '=== MinIO Setup for Screen Recorder ==='
-        MINIO_REGION="${MINIO_REGION:-global}"
         echo "Region: $MINIO_REGION"
         echo 'Waiting for MinIO to be ready...'
         sleep 5
