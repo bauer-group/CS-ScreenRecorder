@@ -229,7 +229,8 @@ services:
       - TZ=${TIME_ZONE:-Etc/UTC}
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
-      - MINIO_REGION=${AWS_S3_REGION:-global}
+      - MINIO_SITE_REGION=${AWS_S3_REGION:-global}
+      - MINIO_SITE_NAME=${STACK_NAME:-SCREENRECORDER}
       - MINIO_API_CORS_ALLOW_ORIGIN=*
       - MINIO_DOMAIN=${S3_HOSTNAME}
       - MINIO_BROWSER_REDIRECT=true
@@ -290,7 +291,6 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - CAP_AWS_SECRET_KEY=${CAP_AWS_SECRET_KEY}
-      - MINIO_REGION=${AWS_S3_REGION:-global}
     entrypoint: /bin/sh
     command:
       - -c
@@ -298,7 +298,6 @@ services:
         set -e
 
         echo '=== MinIO Setup for Screen Recorder ==='
-        echo "Region: $MINIO_REGION"
 
         echo 'Waiting for MinIO to be ready...'
         until mc alias set minio http://minio-server:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" 2>/dev/null; do
@@ -308,7 +307,7 @@ services:
         echo 'MinIO is ready!'
 
         echo 'Ensuring bucket exists...'
-        mc mb --ignore-existing --region "$MINIO_REGION" minio/media
+        mc mb --ignore-existing minio/media
 
         echo 'Setting bucket policy to allow public read for video playback...'
         mc anonymous set download minio/media || true
