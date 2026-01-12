@@ -297,13 +297,15 @@ services:
       - |
         set -e
 
-        echo '=== MinIO Setup for Screen Recorder ==='        
+        echo '=== MinIO Setup for Screen Recorder ==='
         echo "Region: $MINIO_REGION"
-        echo 'Waiting for MinIO to be ready...'
-        sleep 5
 
-        echo 'Configuring MinIO client...'
-        mc alias set minio http://minio-server:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD"
+        echo 'Waiting for MinIO to be ready...'
+        until mc alias set minio http://minio-server:9000 "$MINIO_ROOT_USER" "$MINIO_ROOT_PASSWORD" 2>/dev/null; do
+          echo '  MinIO not ready yet, retrying in 2s...'
+          sleep 2
+        done
+        echo 'MinIO is ready!'
 
         echo 'Ensuring bucket exists...'
         mc mb --ignore-existing --region "$MINIO_REGION" minio/media
