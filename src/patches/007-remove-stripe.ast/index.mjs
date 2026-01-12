@@ -150,7 +150,7 @@ async function main() {
     }
 
     // =========================================================================
-    // Strategy 3b: Fix organization seats/quota for self-hosted
+    // Strategy 3b: UNLIMITED SEATS for self-hosted (simulate Pro license)
     // =========================================================================
     //
     // Target file: apps/web/utils/organization.ts
@@ -159,17 +159,81 @@ async function main() {
     //   const remainingSeats = buildEnv.NEXT_PUBLIC_IS_CAP
     //       ? Math.max(0, inviteQuota - totalUsedSeats)
     //       : Number.MAX_SAFE_INTEGER;
-    //
-    // Problem: organization?.inviteQuota is always undefined (field is on users table, not organizations)
-    // So inviteQuota defaults to 1, which shows "Seats Capacity: 1"
-    //
-    // Fix: Change default from 1 to 10000000
 
-    // Pattern: organization?.inviteQuota ?? 1 -> organization?.inviteQuota ?? 10000000
+    // Fix 1: Replace the entire calculateSeats function to always return unlimited
+    const calculateSeatsRegex = /export\s+function\s+calculateSeats\s*\([^)]*\)\s*\{[\s\S]*?^}/gm;
+    if (calculateSeatsRegex.test(newContent)) {
+      newContent = newContent.replace(calculateSeatsRegex, `export function calculateSeats(organization) {
+  // [SELF-HOSTED] Unlimited Pro license simulation
+  const memberCount = organization?.members?.length ?? 0;
+  const pendingInvitesCount = organization?.invites?.length ?? 0;
+  return {
+    inviteQuota: Number.MAX_SAFE_INTEGER,
+    memberCount,
+    pendingInvitesCount,
+    totalUsedSeats: memberCount + pendingInvitesCount,
+    remainingSeats: Number.MAX_SAFE_INTEGER,
+  };
+}`);
+      log.ok(`Replaced calculateSeats with unlimited version in ${relativePath}`);
+      modified = true;
+    }
+
+    // Fix 2: Fallback - change default from 1 to MAX_SAFE_INTEGER
     const inviteQuotaDefaultRegex = /(organization\??\.inviteQuota\s*\?\?\s*)1(\s*;)/g;
     if (inviteQuotaDefaultRegex.test(newContent)) {
-      newContent = newContent.replace(inviteQuotaDefaultRegex, (_, p1, p2) => `${p1}10000000${p2} /* [SELF-HOSTED] 10 million seats */`);
-      log.ok(`Set invite quota default to 10 million in ${relativePath}`);
+      newContent = newContent.replace(inviteQuotaDefaultRegex, (_, p1, p2) => `${p1}Number.MAX_SAFE_INTEGER${p2} /* [SELF-HOSTED] unlimited */`);
+      log.ok(`Set invite quota to unlimited in ${relativePath}`);
+      modified = true;
+    }
+
+    // =========================================================================
+    // Strategy 3c: ENABLE ALL PRO FEATURES
+    // =========================================================================
+
+    // Pattern: isPro (positive check) -> true
+    const isProPositiveRegex = /\b(isPro|isSubscribed|hasActiveSubscription|hasPro)\b(?!\s*[=:])/g;
+    if (isProPositiveRegex.test(newContent) && !newContent.includes('[SELF-HOSTED]')) {
+      // Only replace in conditional contexts, not declarations
+      const conditionalProRegex = /(?:if\s*\(\s*|&&\s*|\|\|\s*|\?\s*|:\s*)(isPro|isSubscribed|hasActiveSubscription|hasPro)\b/g;
+      if (conditionalProRegex.test(newContent)) {
+        newContent = newContent.replace(conditionalProRegex, (match, varName) => {
+          return match.replace(varName, `true /* [SELF-HOSTED] ${varName} */`);
+        });
+        log.ok(`Enabled Pro status in conditionals in ${relativePath}`);
+        modified = true;
+      }
+    }
+
+    // Pattern: user?.isPro or user.isPro -> true
+    const userProRegex = /\b(user|currentUser|session)\??\.(isPro|isSubscribed|hasPro)\b/g;
+    if (userProRegex.test(newContent)) {
+      newContent = newContent.replace(userProRegex, 'true /* [SELF-HOSTED] Pro enabled */');
+      log.ok(`Enabled user Pro status in ${relativePath}`);
+      modified = true;
+    }
+
+    // Pattern: plan === "free" -> false (not on free plan)
+    const freePlanRegex = /plan\s*===?\s*["']free["']/g;
+    if (freePlanRegex.test(newContent)) {
+      newContent = newContent.replace(freePlanRegex, 'false /* [SELF-HOSTED] Pro plan */');
+      log.ok(`Bypassed free plan check in ${relativePath}`);
+      modified = true;
+    }
+
+    // Pattern: plan !== "pro" -> false (is on pro plan)
+    const notProPlanRegex = /plan\s*!==?\s*["']pro["']/g;
+    if (notProPlanRegex.test(newContent)) {
+      newContent = newContent.replace(notProPlanRegex, 'false /* [SELF-HOSTED] Pro plan */');
+      log.ok(`Enabled pro plan check in ${relativePath}`);
+      modified = true;
+    }
+
+    // Pattern: plan === "pro" -> true
+    const proPlanRegex = /plan\s*===?\s*["']pro["']/g;
+    if (proPlanRegex.test(newContent)) {
+      newContent = newContent.replace(proPlanRegex, 'true /* [SELF-HOSTED] Pro plan */');
+      log.ok(`Enabled pro plan in ${relativePath}`);
       modified = true;
     }
 
@@ -316,13 +380,14 @@ async function main() {
     console.log(`  Skipped:  ${c.yellow}${skippedFiles}${c.reset} file(s) (had references but no actionable patterns)`);
   }
 
-  console.log(`\n${c.blue}Self-hosted mode enabled:${c.reset}`);
+  console.log(`\n${c.blue}UNLIMITED PRO LICENSE SIMULATION:${c.reset}`);
   console.log(`  • Stripe SDK disabled`);
   console.log(`  • All subscription checks return "active"`);
-  console.log(`  • Organization invite subscription check disabled`);
-  console.log(`  • Organization seats set to 10 million`);
+  console.log(`  • isPro / isSubscribed = true`);
+  console.log(`  • plan = "pro" (not "free")`);
+  console.log(`  • Seats: UNLIMITED (Number.MAX_SAFE_INTEGER)`);
   console.log(`  • Upgrade prompts hidden`);
-  console.log(`  • All Pro features unlocked`);
+  console.log(`  • All Pro features unlocked (transcript, summary, chapters)`);
   console.log(`${c.green}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
 
   if (modifiedFiles === 0) {
