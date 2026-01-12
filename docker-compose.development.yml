@@ -196,6 +196,7 @@ services:
       - TZ=${TIME_ZONE:-Etc/UTC}
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_REGION=global
       - MINIO_API_CORS_ALLOW_ORIGIN=*
     ports:
       - "${EXPOSED_MINIO_API_PORT:-9000}:9000"
