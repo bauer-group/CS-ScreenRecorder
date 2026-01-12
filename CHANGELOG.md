@@ -1,3 +1,10 @@
+## [0.4.6](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.5...v0.4.6) (2026-01-12)
+
+
+### Bug Fixes
+
+* **patches:** update comments in Stripe removal patch for clarity ([adcfbc9](https://github.com/bauer-group/CS-ScreenRecorder/commit/adcfbc904165af06ee104b6336bb082d31cf5a09))
+
 ## [0.4.5](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.4...v0.4.5) (2026-01-12)
 
 
