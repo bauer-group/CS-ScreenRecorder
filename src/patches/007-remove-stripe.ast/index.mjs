@@ -163,7 +163,8 @@ async function main() {
     // const inviteQuota = organization.inviteQuota ?? 1;
     const inviteQuotaDefaultRegex = /(inviteQuota\s*=\s*(?:organization\.)?inviteQuota\s*\?\?\s*)1\s*;/g;
     if (inviteQuotaDefaultRegex.test(newContent)) {
-      newContent = newContent.replace(inviteQuotaDefaultRegex, '$110000000; /* [SELF-HOSTED] 10 million seats */');
+      // Use function replacement to avoid $1 + 10000000 being parsed as $110000000
+      newContent = newContent.replace(inviteQuotaDefaultRegex, (_, p1) => `${p1}10000000; /* [SELF-HOSTED] 10 million seats */`);
       log.ok(`Set invite quota to 10 million in ${relativePath}`);
       modified = true;
     }
@@ -171,7 +172,8 @@ async function main() {
     // Alternative: inviteQuota || 1 pattern
     const inviteQuotaOrRegex = /(inviteQuota\s*=\s*(?:organization\.)?inviteQuota\s*\|\|\s*)1\s*;/g;
     if (inviteQuotaOrRegex.test(newContent)) {
-      newContent = newContent.replace(inviteQuotaOrRegex, '$110000000; /* [SELF-HOSTED] 10 million seats */');
+      // Use function replacement to avoid $1 + 10000000 being parsed as $110000000
+      newContent = newContent.replace(inviteQuotaOrRegex, (_, p1) => `${p1}10000000; /* [SELF-HOSTED] 10 million seats */`);
       log.ok(`Set invite quota to 10 million (|| pattern) in ${relativePath}`);
       modified = true;
     }
