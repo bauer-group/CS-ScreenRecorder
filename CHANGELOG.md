@@ -1,3 +1,11 @@
+## [0.4.1](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.0...v0.4.1) (2026-01-12)
+
+
+### Bug Fixes
+
+* **patches:** update branding script to replace absolute URLs with relative paths for middleware redirects ([453c901](https://github.com/bauer-group/CS-ScreenRecorder/commit/453c9016dce548ded9e4f7b363cf41155030290d))
+* **patches:** update invite quota and seat limits to 10 million for self-hosted deployments ([4b19f11](https://github.com/bauer-group/CS-ScreenRecorder/commit/4b19f1149a74e17d646d71f6554a5a315e7ae209))
+
 # [0.4.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.3.1...v0.4.0) (2026-01-12)
 
 
