@@ -1,3 +1,10 @@
+## [0.4.4](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.3...v0.4.4) (2026-01-12)
+
+
+### Bug Fixes
+
+* **patches:** update invite quota default to 10 million for self-hosted deployments ([ec15b36](https://github.com/bauer-group/CS-ScreenRecorder/commit/ec15b36f00a126d7eb634e65d300fcd38be75a0a))
+
 ## [0.4.3](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.2...v0.4.3) (2026-01-12)
 
 
