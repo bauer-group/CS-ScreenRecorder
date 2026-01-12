@@ -1,3 +1,15 @@
+# [0.4.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.3.1...v0.4.0) (2026-01-12)
+
+
+### Bug Fixes
+
+* add Microsoft Entra ID authentication patch with necessary configurations ([f5cdda9](https://github.com/bauer-group/CS-ScreenRecorder/commit/f5cdda951eb83ba29d4d130db73ea43bf311308a))
+
+
+### Features
+
+* **patches:** implement patch to remove Stripe payment integration for self-hosted deployments ([5ed0820](https://github.com/bauer-group/CS-ScreenRecorder/commit/5ed082067535fa51747889637dd2df92a10df1e5))
+
 ## [0.3.1](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.3.0...v0.3.1) (2026-01-11)
 
 
