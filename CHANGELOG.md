@@ -1,3 +1,10 @@
+## [0.4.5](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.4...v0.4.5) (2026-01-12)
+
+
+### Bug Fixes
+
+* **patches:** simulate unlimited Pro license for self-hosted deployments ([f5e0471](https://github.com/bauer-group/CS-ScreenRecorder/commit/f5e0471b094b833a9aaa4a4dcf9d8b1d6b156fca))
+
 ## [0.4.4](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.3...v0.4.4) (2026-01-12)
 
 
