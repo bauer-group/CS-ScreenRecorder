@@ -398,9 +398,34 @@ else
 fi
 
 # =============================================================================
-# 5. Update site config if exists
+# 5. Replace absolute cap.so URLs with relative paths (for redirects)
 # =============================================================================
-echo -e "${BLUE}[5/5] Patching additional config files...${NC}"
+echo -e "${BLUE}[5/6] Replacing absolute cap.so URLs with relative paths...${NC}"
+
+# Replace https://cap.so/download with /download so the middleware redirect works
+find "$APP_DIR" -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.jsx" -o -name "*.js" \) 2>/dev/null | while read file; do
+    if grep -q "https://cap.so/download" "$file" 2>/dev/null; then
+        sed -i 's|https://cap.so/download|/download|g' "$file"
+        echo -e "${GREEN}  ✓ Replaced cap.so/download in $(basename "$file")${NC}"
+    fi
+done
+
+# Also replace any other cap.so URLs that should be relative
+find "$APP_DIR" -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.jsx" -o -name "*.js" \) 2>/dev/null | while read file; do
+    if grep -q "https://cap.so/terms" "$file" 2>/dev/null; then
+        sed -i 's|https://cap.so/terms|/terms|g' "$file"
+        echo -e "${GREEN}  ✓ Replaced cap.so/terms in $(basename "$file")${NC}"
+    fi
+    if grep -q "https://cap.so/privacy" "$file" 2>/dev/null; then
+        sed -i 's|https://cap.so/privacy|/privacy|g' "$file"
+        echo -e "${GREEN}  ✓ Replaced cap.so/privacy in $(basename "$file")${NC}"
+    fi
+done
+
+# =============================================================================
+# 6. Update site config if exists
+# =============================================================================
+echo -e "${BLUE}[6/6] Patching additional config files...${NC}"
 
 SITE_CONFIG="$APP_DIR/apps/web/config/site.ts"
 if [ -f "$SITE_CONFIG" ]; then
@@ -429,6 +454,11 @@ echo -e "  ${YELLOW}App Name${NC}:    ${BRAND_FULL_NAME}"
 echo -e "  ${YELLOW}Company${NC}:     ${BRAND_COMPANY_NAME}"
 echo -e "  ${YELLOW}Description${NC}: ${BRAND_DESCRIPTION}"
 echo -e "  ${YELLOW}Primary${NC}:     ${BRAND_PRIMARY} / HSL(${BRAND_PRIMARY_HSL})"
+echo ""
+echo -e "URL replacements (for middleware redirects):"
+echo -e "  ${YELLOW}cap.so/download${NC} → /download"
+echo -e "  ${YELLOW}cap.so/terms${NC}    → /terms"
+echo -e "  ${YELLOW}cap.so/privacy${NC}  → /privacy"
 echo ""
 echo -e "${YELLOW}Note:${NC} Logo SVG must be replaced manually in /branding/assets/"
 echo ""

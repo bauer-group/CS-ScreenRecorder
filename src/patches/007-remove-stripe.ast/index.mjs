@@ -138,6 +138,53 @@ async function main() {
       modified = true;
     }
 
+    // Pattern: Organization invite subscription check
+    // if (!organizationOwner || !organizationOwner.stripeSubscriptionId)
+    const orgOwnerSubCheckRegex = /if\s*\(\s*!organizationOwner\s*\|\|\s*!organizationOwner\.stripeSubscriptionId\s*\)\s*\{[^}]*"Organization owner not found or has no subscription"[^}]*\}/gs;
+    if (orgOwnerSubCheckRegex.test(newContent)) {
+      newContent = newContent.replace(orgOwnerSubCheckRegex, '/* [SELF-HOSTED] Organization subscription check disabled */');
+      log.ok(`Disabled organization invite subscription check in ${relativePath}`);
+      modified = true;
+    }
+
+    // Alternative pattern for stripeSubscriptionId checks in invite flow
+    const stripeSubIdCheckRegex = /!organizationOwner\.stripeSubscriptionId/g;
+    if (stripeSubIdCheckRegex.test(newContent)) {
+      newContent = newContent.replace(stripeSubIdCheckRegex, 'false /* [SELF-HOSTED] subscription not required */');
+      log.ok(`Bypassed stripeSubscriptionId check in ${relativePath}`);
+      modified = true;
+    }
+
+    // =========================================================================
+    // Strategy 3b: Fix organization seats/quota for self-hosted
+    // =========================================================================
+
+    // Pattern: inviteQuota defaults to 1 - change to unlimited
+    // const inviteQuota = organization.inviteQuota ?? 1;
+    const inviteQuotaDefaultRegex = /(inviteQuota\s*=\s*(?:organization\.)?inviteQuota\s*\?\?\s*)1\s*;/g;
+    if (inviteQuotaDefaultRegex.test(newContent)) {
+      newContent = newContent.replace(inviteQuotaDefaultRegex, '$1Number.MAX_SAFE_INTEGER; /* [SELF-HOSTED] unlimited seats */');
+      log.ok(`Set unlimited invite quota in ${relativePath}`);
+      modified = true;
+    }
+
+    // Alternative: inviteQuota || 1 pattern
+    const inviteQuotaOrRegex = /(inviteQuota\s*=\s*(?:organization\.)?inviteQuota\s*\|\|\s*)1\s*;/g;
+    if (inviteQuotaOrRegex.test(newContent)) {
+      newContent = newContent.replace(inviteQuotaOrRegex, '$1Number.MAX_SAFE_INTEGER; /* [SELF-HOSTED] unlimited seats */');
+      log.ok(`Set unlimited invite quota (|| pattern) in ${relativePath}`);
+      modified = true;
+    }
+
+    // Pattern: NEXT_PUBLIC_IS_CAP check for seats - make it always use unlimited
+    // remainingSeats = buildEnv.NEXT_PUBLIC_IS_CAP ? Math.max(...) : Number.MAX_SAFE_INTEGER
+    const isCapSeatsCheckRegex = /buildEnv\.NEXT_PUBLIC_IS_CAP\s*\?\s*Math\.max\s*\(\s*0\s*,\s*inviteQuota\s*-\s*totalUsedSeats\s*\)\s*:\s*Number\.MAX_SAFE_INTEGER/g;
+    if (isCapSeatsCheckRegex.test(newContent)) {
+      newContent = newContent.replace(isCapSeatsCheckRegex, 'Number.MAX_SAFE_INTEGER /* [SELF-HOSTED] always unlimited seats */');
+      log.ok(`Made seats always unlimited in ${relativePath}`);
+      modified = true;
+    }
+
     // =========================================================================
     // Strategy 4: Hide upgrade/pricing UI components
     // =========================================================================
@@ -284,6 +331,8 @@ async function main() {
   console.log(`\n${c.blue}Self-hosted mode enabled:${c.reset}`);
   console.log(`  • Stripe SDK disabled`);
   console.log(`  • All subscription checks return "active"`);
+  console.log(`  • Organization invite subscription check disabled`);
+  console.log(`  • Organization seats set to unlimited`);
   console.log(`  • Upgrade prompts hidden`);
   console.log(`  • All Pro features unlocked`);
   console.log(`${c.green}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
