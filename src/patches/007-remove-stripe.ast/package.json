@@ -1,0 +1,12 @@
+{
+  "name": "remove-stripe-patch",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Remove Stripe payment integration for self-hosted deployment",
+  "scripts": {
+    "patch": "node index.mjs"
+  },
+  "dependencies": {
+    "glob": "^10.0.0"
+  }
+}

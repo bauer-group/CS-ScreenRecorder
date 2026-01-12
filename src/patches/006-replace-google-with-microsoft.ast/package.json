@@ -1,0 +1,12 @@
+{
+  "name": "replace-google-with-microsoft-patch",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Replace Google OAuth with Microsoft Entra ID (Azure AD) authentication",
+  "scripts": {
+    "patch": "node index.mjs"
+  },
+  "dependencies": {
+    "ts-morph": "^24.0.0"
+  }
+}

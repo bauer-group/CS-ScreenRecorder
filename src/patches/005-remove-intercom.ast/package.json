@@ -1,0 +1,12 @@
+{
+  "name": "remove-intercom-patch",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Remove Intercom/Fin chat widget from Cap",
+  "scripts": {
+    "patch": "node index.mjs"
+  },
+  "dependencies": {
+    "glob": "^10.0.0"
+  }
+}

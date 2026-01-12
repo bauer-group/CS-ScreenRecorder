@@ -197,6 +197,8 @@ function patch4_Layout() {
     return true;
   }
 
+  // Note: Cap already has 'export const dynamic = "force-dynamic"' so env vars are evaluated at runtime
+
   // Find googleAuthAvailable: !!serverEnv().GOOGLE_CLIENT_ID and add microsoft after it
   const pattern = /(googleAuthAvailable:\s*!!serverEnv\(\)\.GOOGLE_CLIENT_ID,?)/;
   const match = content.match(pattern);
@@ -205,9 +207,16 @@ function patch4_Layout() {
     log.debug('Found: ' + match[0]);
     let replacement = match[0];
     if (!replacement.endsWith(',')) replacement += ',';
-    replacement += '\n\t\t\t\tmicrosoftAuthAvailable: !!serverEnv().AZURE_AD_CLIENT_ID,';
+    // Add debug logging + the actual value
+    replacement += `
+        microsoftAuthAvailable: (() => {
+          const hasAzure = !!serverEnv().AZURE_AD_CLIENT_ID;
+          console.log("[MS-AUTH] AZURE_AD_CLIENT_ID present:", hasAzure, "value:", serverEnv().AZURE_AD_CLIENT_ID ? "***SET***" : "EMPTY");
+          return hasAzure;
+        })(),`;
     content = content.replace(match[0], replacement);
-    log.ok('Added value');
+    log.ok('Added value with debug logging');
+
   } else {
     log.err('googleAuthAvailable value not found');
     // Try to find what's there
@@ -268,47 +277,26 @@ function patch5_LoginForm() {
     return false;
   }
 
-  // 5b. Add button after Google button
-  // Find: {publicEnv.googleAuthAvailable && !oauthError && (
-  //         <MotionButton ... >Login with Google</MotionButton>
-  //       )}
+  // 5b. Add Microsoft button after Google button block
+  // Use regex to find the entire Google button block and insert after it
+  const googleButtonPattern = /(\{publicEnv\.googleAuthAvailable\s*&&\s*!oauthError\s*&&\s*\([\s\S]*?Login with Google[\s\S]*?<\/MotionButton>\s*\)\})/;
+  const googleMatch = content.match(googleButtonPattern);
 
-  // Strategy: Find "Login with Google" and then find the closing )}
-  const lines = content.split('\n');
-  let insertLine = -1;
-  let indent = '\t\t\t\t';
+  if (googleMatch) {
+    log.debug('Found Google button block');
 
-  for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('Login with Google')) {
-      log.debug(`Found "Login with Google" at line ${i+1}`);
-      // Find closing )} after </MotionButton>
-      for (let j = i + 1; j < lines.length; j++) {
-        if (lines[j].includes('</MotionButton>')) {
-          // Find )} on next lines
-          for (let k = j; k < Math.min(j + 5, lines.length); k++) {
-            if (lines[k].trim() === ')}') {
-              insertLine = k;
-              // Get indentation from googleAuthAvailable line
-              for (let m = i; m >= Math.max(0, i - 10); m--) {
-                if (lines[m].includes('googleAuthAvailable')) {
-                  const indentMatch = lines[m].match(/^(\s*)/);
-                  if (indentMatch) indent = indentMatch[1];
-                  break;
-                }
-              }
-              break;
-            }
-          }
-          break;
-        }
-      }
-      break;
-    }
-  }
+    // Get the indentation from the matched block
+    const indentMatch = googleMatch[0].match(/^(\s*)/);
+    const indent = indentMatch ? indentMatch[1] : '\t\t\t\t\t\t';
 
-  if (insertLine > 0) {
-    const microsoftButton =
-`${indent}{publicEnv.microsoftAuthAvailable && !oauthError && (
+    const microsoftButton = `
+${indent}{/* DEBUG: Show publicEnv contents */}
+${indent}<pre style={{fontSize: '10px', background: '#ff0', padding: '5px'}}>
+${indent}\tpublicEnv keys: {JSON.stringify(Object.keys(publicEnv))}
+${indent}\tmicrosoftAuthAvailable: {String(publicEnv.microsoftAuthAvailable)}
+${indent}</pre>
+${indent}{/* Microsoft Login Button */}
+${indent}{publicEnv.microsoftAuthAvailable && !oauthError && (
 ${indent}\t<MotionButton
 ${indent}\t\tvariant="gray"
 ${indent}\t\ttype="button"
@@ -321,11 +309,27 @@ ${indent}\t\tLogin with Microsoft
 ${indent}\t</MotionButton>
 ${indent})}`;
 
-    lines.splice(insertLine + 1, 0, microsoftButton);
-    content = lines.join('\n');
-    log.ok('Added button');
+    content = content.replace(googleMatch[0], googleMatch[0] + microsoftButton);
+    log.ok('Added Microsoft button with debug after Google button');
+
+    // Debug: Show what we're inserting
+    log.debug('=== INSERTED CONTENT START ===');
+    console.log(microsoftButton.substring(0, 500));
+    log.debug('=== INSERTED CONTENT END ===');
+
+    // Debug: Show surrounding context in final file
+    const msIndex = content.indexOf('microsoftAuthAvailable && !oauthError');
+    if (msIndex > 0) {
+      log.debug('=== CONTEXT AROUND MICROSOFT BUTTON ===');
+      console.log(content.substring(msIndex - 100, msIndex + 300));
+      log.debug('=== END CONTEXT ===');
+    }
   } else {
-    log.err('Could not find Google button block');
+    log.err('Could not find Google button block with regex');
+    log.debug('Searching for googleAuthAvailable...');
+    if (content.includes('googleAuthAvailable')) {
+      log.debug('Found googleAuthAvailable in file');
+    }
     return false;
   }
 
