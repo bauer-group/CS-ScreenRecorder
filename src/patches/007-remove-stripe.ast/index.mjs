@@ -159,29 +159,29 @@ async function main() {
     // Strategy 3b: Fix organization seats/quota for self-hosted
     // =========================================================================
 
-    // Pattern: inviteQuota defaults to 1 - change to unlimited
+    // Pattern: inviteQuota defaults to 1 - change to 10 million for self-hosted
     // const inviteQuota = organization.inviteQuota ?? 1;
     const inviteQuotaDefaultRegex = /(inviteQuota\s*=\s*(?:organization\.)?inviteQuota\s*\?\?\s*)1\s*;/g;
     if (inviteQuotaDefaultRegex.test(newContent)) {
-      newContent = newContent.replace(inviteQuotaDefaultRegex, '$1Number.MAX_SAFE_INTEGER; /* [SELF-HOSTED] unlimited seats */');
-      log.ok(`Set unlimited invite quota in ${relativePath}`);
+      newContent = newContent.replace(inviteQuotaDefaultRegex, '$110000000; /* [SELF-HOSTED] 10 million seats */');
+      log.ok(`Set invite quota to 10 million in ${relativePath}`);
       modified = true;
     }
 
     // Alternative: inviteQuota || 1 pattern
     const inviteQuotaOrRegex = /(inviteQuota\s*=\s*(?:organization\.)?inviteQuota\s*\|\|\s*)1\s*;/g;
     if (inviteQuotaOrRegex.test(newContent)) {
-      newContent = newContent.replace(inviteQuotaOrRegex, '$1Number.MAX_SAFE_INTEGER; /* [SELF-HOSTED] unlimited seats */');
-      log.ok(`Set unlimited invite quota (|| pattern) in ${relativePath}`);
+      newContent = newContent.replace(inviteQuotaOrRegex, '$110000000; /* [SELF-HOSTED] 10 million seats */');
+      log.ok(`Set invite quota to 10 million (|| pattern) in ${relativePath}`);
       modified = true;
     }
 
-    // Pattern: NEXT_PUBLIC_IS_CAP check for seats - make it always use unlimited
+    // Pattern: NEXT_PUBLIC_IS_CAP check for seats - make it always use 10 million
     // remainingSeats = buildEnv.NEXT_PUBLIC_IS_CAP ? Math.max(...) : Number.MAX_SAFE_INTEGER
     const isCapSeatsCheckRegex = /buildEnv\.NEXT_PUBLIC_IS_CAP\s*\?\s*Math\.max\s*\(\s*0\s*,\s*inviteQuota\s*-\s*totalUsedSeats\s*\)\s*:\s*Number\.MAX_SAFE_INTEGER/g;
     if (isCapSeatsCheckRegex.test(newContent)) {
-      newContent = newContent.replace(isCapSeatsCheckRegex, 'Number.MAX_SAFE_INTEGER /* [SELF-HOSTED] always unlimited seats */');
-      log.ok(`Made seats always unlimited in ${relativePath}`);
+      newContent = newContent.replace(isCapSeatsCheckRegex, '10000000 /* [SELF-HOSTED] 10 million seats */');
+      log.ok(`Set remaining seats to 10 million in ${relativePath}`);
       modified = true;
     }
 
@@ -332,7 +332,7 @@ async function main() {
   console.log(`  • Stripe SDK disabled`);
   console.log(`  • All subscription checks return "active"`);
   console.log(`  • Organization invite subscription check disabled`);
-  console.log(`  • Organization seats set to unlimited`);
+  console.log(`  • Organization seats set to 10 million`);
   console.log(`  • Upgrade prompts hidden`);
   console.log(`  • All Pro features unlocked`);
   console.log(`${c.green}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
