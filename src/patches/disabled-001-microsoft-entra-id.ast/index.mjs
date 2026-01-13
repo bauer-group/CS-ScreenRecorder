@@ -4,7 +4,7 @@
  *
  * Adds Microsoft login EXACTLY like Google login is implemented.
  * Reference: Google implementation in Cap v0.3.83
- * replaced by 006-microsoft-entra-id.ts
+ * replaced by 006-microsoft-entra-id.ts, because several issues
  */
 
 import { Project } from 'ts-morph';
