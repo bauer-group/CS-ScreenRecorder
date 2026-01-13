@@ -38,253 +38,60 @@ console.log(`${c.blue}━━━━━━━━━━━━━━━━━━━�
 let modifiedFiles = 0;
 
 // =============================================================================
+// Helper: Check if file should be skipped (database, schema, etc.)
+// =============================================================================
+function shouldSkipFile(relativePath) {
+  const skipPatterns = [
+    /schema\.(ts|js)$/i,
+    /database/i,
+    /migrations?/i,
+    /drizzle/i,
+    /prisma/i,
+    /\.sql$/i,
+    /seed\.(ts|js)$/i,
+  ];
+
+  return skipPatterns.some(pattern => pattern.test(relativePath));
+}
+
+// =============================================================================
 // Main patch function
 // =============================================================================
 async function main() {
   log.info('Searching for onboarding-related code...\n');
 
-  // Find all TypeScript/JavaScript files in onboarding paths
-  const files = await glob('**/*.{ts,tsx,js,jsx}', {
+  // Find files specifically in onboarding directories first
+  const onboardingFiles = await glob('**/onboarding/**/*.{ts,tsx,js,jsx}', {
     cwd: APP_DIR,
     ignore: ['**/node_modules/**', '**/.next/**', '**/dist/**'],
     absolute: true
   });
 
-  log.info(`Found ${files.length} source files to scan\n`);
+  // Also find files that might contain onboarding step definitions
+  const otherFiles = await glob('**/*.{ts,tsx,js,jsx}', {
+    cwd: APP_DIR,
+    ignore: ['**/node_modules/**', '**/.next/**', '**/dist/**', '**/onboarding/**'],
+    absolute: true
+  });
 
-  for (const file of files) {
-    let content;
-    try {
-      content = fs.readFileSync(file, 'utf8');
-    } catch (e) {
-      continue;
-    }
+  log.info(`Found ${onboardingFiles.length} files in onboarding directories`);
+  log.info(`Found ${otherFiles.length} other source files to scan\n`);
 
-    // Check if file contains onboarding-related references
-    const hasOnboarding = /onboarding|OnBoarding/i.test(content);
-    const hasSteps = /custom.*domain|invite.*team|organization.*setup/i.test(content);
-    const hasStepConfig = /steps?\s*[=:]\s*\[|stepIndex|currentStep|activeStep/i.test(content);
+  // Process onboarding files first (more aggressive patching)
+  for (const file of onboardingFiles) {
+    await processOnboardingFile(file, true);
+  }
 
-    if (!hasOnboarding && !hasSteps && !hasStepConfig) {
-      continue;
-    }
-
+  // Process other files (conservative patching - only step configs)
+  for (const file of otherFiles) {
     const relativePath = path.relative(APP_DIR, file);
-    let modified = false;
-    let newContent = content;
 
-    // =========================================================================
-    // Strategy 1: Replace Custom Domain step content with auto-skip
-    // =========================================================================
-
-    // Pattern: Step that shows "Custom Domain" UI
-    // Replace the entire step content to auto-skip to next step
-    const customDomainComponentRegex = /(function|const)\s+(CustomDomain|CustomDomainStep|DomainStep)\s*[=:]/;
-    if (customDomainComponentRegex.test(newContent)) {
-      log.info(`Found Custom Domain component in: ${relativePath}`);
-
-      // Replace component to auto-advance
-      const autoSkipComponent = `
-// [SELF-HOSTED] Custom Domain step auto-skipped
-const CustomDomainAutoSkip = ({ onNext, onSkip }) => {
-  React.useEffect(() => {
-    // Auto-skip this step for self-hosted
-    const skip = onSkip || onNext;
-    if (skip) skip();
-  }, [onNext, onSkip]);
-  return null;
-};
-`;
-      // Try to add auto-skip behavior
-      newContent = newContent.replace(
-        /(["']Custom Domain["'])/gi,
-        '"" /* [SELF-HOSTED] Custom Domain skipped */'
-      );
-      modified = true;
-      log.ok('Neutralized Custom Domain references');
+    // Skip database/schema files entirely
+    if (shouldSkipFile(relativePath)) {
+      continue;
     }
 
-    // =========================================================================
-    // Strategy 2: Replace Invite Team step content with auto-skip
-    // =========================================================================
-
-    const inviteTeamComponentRegex = /(function|const)\s+(InviteTeam|InviteTeamStep|TeamInvite)\s*[=:]/;
-    if (inviteTeamComponentRegex.test(newContent)) {
-      log.info(`Found Invite Team component in: ${relativePath}`);
-
-      newContent = newContent.replace(
-        /(["']Invite your team["']|["']Invite Team["'])/gi,
-        '"" /* [SELF-HOSTED] Invite Team skipped */'
-      );
-      modified = true;
-      log.ok('Neutralized Invite Team references');
-    }
-
-    // =========================================================================
-    // Strategy 3: Modify steps array to remove these steps
-    // =========================================================================
-
-    // Pattern: Steps array containing these step names
-    // ["welcome", "organization", "custom-domain", "invite", "download"]
-    const stepsArrayPatterns = [
-      // Remove "custom-domain" or "customDomain" from array
-      /,?\s*["']custom[-_]?domain["']\s*,?/gi,
-      // Remove "invite-team" or "inviteTeam" from array
-      /,?\s*["']invite[-_]?team["']\s*,?/gi,
-      // Remove "invite" step (if standalone)
-      /,?\s*["']invite["']\s*,?/gi,
-      // Remove "domain" step (if standalone)
-      /,?\s*["']domain["']\s*,?/gi,
-    ];
-
-    for (const pattern of stepsArrayPatterns) {
-      if (pattern.test(newContent)) {
-        newContent = newContent.replace(pattern, (match) => {
-          // Keep one comma if between items
-          return match.includes(',') ? ',' : '';
-        });
-        modified = true;
-        log.ok(`Removed step from array pattern: ${pattern.source}`);
-      }
-    }
-
-    // Clean up double commas from removal
-    newContent = newContent.replace(/,\s*,/g, ',');
-    newContent = newContent.replace(/\[\s*,/g, '[');
-    newContent = newContent.replace(/,\s*\]/g, ']');
-
-    // =========================================================================
-    // Strategy 4: Modify step index navigation
-    // =========================================================================
-
-    // Pattern: if (currentStep === 2) -> skip to step 4 (Download)
-    // This handles numeric step navigation
-    const stepNavRegex = /setStep\s*\(\s*(\d+)\s*\)/g;
-    // We'll handle this more carefully if we find specific patterns
-
-    // =========================================================================
-    // Strategy 5: Hide steps in stepper/progress UI
-    // =========================================================================
-
-    // Pattern: Step config objects with label/title
-    // { label: "Custom Domain", ... } -> skip or hide
-
-    // Hide Custom Domain step in UI
-    const customDomainStepObjRegex = /\{\s*(?:[^{}]*,)?\s*(?:label|title|name)\s*:\s*["']Custom Domain["'][^}]*\}/gi;
-    if (customDomainStepObjRegex.test(newContent)) {
-      newContent = newContent.replace(customDomainStepObjRegex, '/* [SELF-HOSTED] Custom Domain step removed */ { skip: true, hidden: true }');
-      modified = true;
-      log.ok('Removed Custom Domain step config');
-    }
-
-    // Hide Invite Team step in UI
-    const inviteTeamStepObjRegex = /\{\s*(?:[^{}]*,)?\s*(?:label|title|name)\s*:\s*["']Invite (?:your )?team["'][^}]*\}/gi;
-    if (inviteTeamStepObjRegex.test(newContent)) {
-      newContent = newContent.replace(inviteTeamStepObjRegex, '/* [SELF-HOSTED] Invite Team step removed */ { skip: true, hidden: true }');
-      modified = true;
-      log.ok('Removed Invite Team step config');
-    }
-
-    // =========================================================================
-    // Strategy 6: Return null/skip for step content render
-    // =========================================================================
-
-    // Pattern: case "custom-domain": return <CustomDomain />
-    const switchCaseCustomDomainRegex = /case\s+["']custom[-_]?domain["']\s*:\s*return\s+[^;]+;/gi;
-    if (switchCaseCustomDomainRegex.test(newContent)) {
-      newContent = newContent.replace(switchCaseCustomDomainRegex, 'case "custom-domain": return null; /* [SELF-HOSTED] skipped */');
-      modified = true;
-      log.ok('Bypassed Custom Domain case');
-    }
-
-    const switchCaseInviteRegex = /case\s+["']invite[-_]?team["']\s*:\s*return\s+[^;]+;/gi;
-    if (switchCaseInviteRegex.test(newContent)) {
-      newContent = newContent.replace(switchCaseInviteRegex, 'case "invite-team": return null; /* [SELF-HOSTED] skipped */');
-      modified = true;
-      log.ok('Bypassed Invite Team case');
-    }
-
-    // =========================================================================
-    // Strategy 7: Handle step number constants
-    // =========================================================================
-
-    // Pattern: CUSTOM_DOMAIN_STEP = 3, INVITE_STEP = 4
-    const stepConstantRegex = /(CUSTOM_DOMAIN_STEP|DOMAIN_STEP|INVITE_STEP|INVITE_TEAM_STEP)\s*=\s*\d+/gi;
-    if (stepConstantRegex.test(newContent)) {
-      newContent = newContent.replace(stepConstantRegex, '$1 = -1 /* [SELF-HOSTED] disabled */');
-      modified = true;
-      log.ok('Disabled step constants');
-    }
-
-    // =========================================================================
-    // Strategy 8: Auto-skip in step component with useEffect
-    // =========================================================================
-
-    // Look for onboarding step components and add auto-skip
-    // This handles cases where the component is rendered but should immediately skip
-
-    // Pattern: export function CustomDomain or export const CustomDomain
-    const customDomainExportRegex = /export\s+(function|const)\s+CustomDomain/;
-    if (customDomainExportRegex.test(newContent)) {
-      // Add early return to skip rendering
-      newContent = newContent.replace(
-        /(export\s+(?:function|const)\s+CustomDomain[^{]*\{)/,
-        `$1\n  // [SELF-HOSTED] Auto-skip Custom Domain step\n  return null;\n  /* Original code below disabled:\n`
-      );
-      // Close the comment at the end of function (simplified)
-      modified = true;
-      log.ok('Added auto-skip to Custom Domain export');
-    }
-
-    // =========================================================================
-    // Strategy 9: Filter steps in map/render
-    // =========================================================================
-
-    // Pattern: steps.map((step) => ...) - filter out skipped steps
-    // Add filter before map if steps array is used
-    const stepsMapRegex = /(steps)\.map\s*\(/g;
-    if (stepsMapRegex.test(newContent) && (content.includes('Custom Domain') || content.includes('Invite'))) {
-      newContent = newContent.replace(
-        stepsMapRegex,
-        '$1.filter(s => !s.skip && !s.hidden).map('
-      );
-      modified = true;
-      log.ok('Added filter to steps.map()');
-    }
-
-    // =========================================================================
-    // Strategy 10: Direct text replacement for step labels in array
-    // =========================================================================
-
-    // If we find an array with these labels, mark them for filtering
-    if (newContent.includes('"Custom Domain"') || newContent.includes("'Custom Domain'")) {
-      // Add a skip property or remove entirely
-      newContent = newContent.replace(
-        /\{\s*([^}]*)(["']Custom Domain["'])([^}]*)\}/g,
-        '{ $1$2$3, skip: true, hidden: true }'
-      );
-      modified = true;
-      log.ok('Marked Custom Domain step for skip');
-    }
-
-    if (newContent.includes('"Invite your team"') || newContent.includes("'Invite your team'")) {
-      newContent = newContent.replace(
-        /\{\s*([^}]*)(["']Invite your team["'])([^}]*)\}/g,
-        '{ $1$2$3, skip: true, hidden: true }'
-      );
-      modified = true;
-      log.ok('Marked Invite your team step for skip');
-    }
-
-    // =========================================================================
-    // Save changes
-    // =========================================================================
-
-    if (modified) {
-      fs.writeFileSync(file, newContent);
-      modifiedFiles++;
-      log.info(`  Saved: ${relativePath}\n`);
-    }
+    await processOnboardingFile(file, false);
   }
 
   // =========================================================================
@@ -306,6 +113,129 @@ const CustomDomainAutoSkip = ({ onNext, onSkip }) => {
     log.warn('No onboarding files were modified.');
     log.warn('The onboarding flow may have changed in this Cap version.');
     log.warn('Check manually if needed: apps/web/app/onboarding or similar');
+  }
+}
+
+// =============================================================================
+// Process a single file
+// =============================================================================
+async function processOnboardingFile(file, isOnboardingDir) {
+  let content;
+  try {
+    content = fs.readFileSync(file, 'utf8');
+  } catch (e) {
+    return;
+  }
+
+  const relativePath = path.relative(APP_DIR, file);
+
+  // For non-onboarding files, only process if it has step config patterns
+  if (!isOnboardingDir) {
+    const hasStepConfig = /steps?\s*[=:]\s*\[.*(?:Custom Domain|Invite)/is.test(content);
+    if (!hasStepConfig) {
+      return;
+    }
+  }
+
+  let modified = false;
+  let newContent = content;
+
+  // =========================================================================
+  // Strategy 1: Hide steps in stepper/progress UI (SAFE - exact match)
+  // =========================================================================
+
+  // Pattern: Step config objects with exact label "Custom Domain"
+  // { label: "Custom Domain", ... } -> add skip: true
+  const customDomainStepObjRegex = /(\{\s*(?:[^{}]*,)?\s*(?:label|title|name)\s*:\s*)(["']Custom Domain["'])([^}]*\})/gi;
+  if (customDomainStepObjRegex.test(newContent)) {
+    newContent = newContent.replace(customDomainStepObjRegex, '$1$2$3 /* [SELF-HOSTED] skipped */');
+    modified = true;
+    log.ok(`Marked Custom Domain step config in ${relativePath}`);
+  }
+
+  // Pattern: Step config objects with exact label "Invite your team"
+  const inviteTeamStepObjRegex = /(\{\s*(?:[^{}]*,)?\s*(?:label|title|name)\s*:\s*)(["']Invite your team["'])([^}]*\})/gi;
+  if (inviteTeamStepObjRegex.test(newContent)) {
+    newContent = newContent.replace(inviteTeamStepObjRegex, '$1$2$3 /* [SELF-HOSTED] skipped */');
+    modified = true;
+    log.ok(`Marked Invite Team step config in ${relativePath}`);
+  }
+
+  // =========================================================================
+  // Strategy 2: For onboarding files only - more aggressive patching
+  // =========================================================================
+
+  if (isOnboardingDir) {
+    // Pattern: Step component that renders Custom Domain UI
+    // Look for components/pages that render the Custom Domain step
+    if (content.includes('Custom Domain') && content.includes('Upgrade to Pro')) {
+      // This is likely the Custom Domain step - add auto-skip
+      const useEffectPattern = /(useEffect\s*\(\s*\(\)\s*=>\s*\{)/;
+      if (useEffectPattern.test(newContent) && !newContent.includes('[SELF-HOSTED]')) {
+        // Add skip logic at the start
+        newContent = newContent.replace(
+          useEffectPattern,
+          `$1\n    // [SELF-HOSTED] Auto-skip Custom Domain step\n    if (typeof onSkip === 'function') { onSkip(); return; }\n`
+        );
+        modified = true;
+        log.ok(`Added auto-skip to Custom Domain in ${relativePath}`);
+      }
+    }
+
+    // Pattern: Step component that renders Invite Team UI with pricing
+    if (content.includes('Invite your team') && (content.includes('$') || content.includes('per user'))) {
+      const useEffectPattern = /(useEffect\s*\(\s*\(\)\s*=>\s*\{)/;
+      if (useEffectPattern.test(newContent) && !newContent.includes('[SELF-HOSTED]')) {
+        newContent = newContent.replace(
+          useEffectPattern,
+          `$1\n    // [SELF-HOSTED] Auto-skip Invite Team step\n    if (typeof onSkip === 'function') { onSkip(); return; }\n`
+        );
+        modified = true;
+        log.ok(`Added auto-skip to Invite Team in ${relativePath}`);
+      }
+    }
+
+    // Pattern: Switch/case for step rendering
+    // case 3: return <CustomDomain /> -> case 3: return null
+    const caseCustomDomainRegex = /(case\s+\d+\s*:[\s\S]*?)(return\s+<\s*(?:CustomDomain|DomainStep)[^>]*\s*\/?>\s*;?)/gi;
+    if (caseCustomDomainRegex.test(newContent)) {
+      newContent = newContent.replace(caseCustomDomainRegex, '$1return null; /* [SELF-HOSTED] Custom Domain skipped */');
+      modified = true;
+      log.ok(`Bypassed Custom Domain case in ${relativePath}`);
+    }
+
+    const caseInviteRegex = /(case\s+\d+\s*:[\s\S]*?)(return\s+<\s*(?:InviteTeam|TeamInvite|InviteStep)[^>]*\s*\/?>\s*;?)/gi;
+    if (caseInviteRegex.test(newContent)) {
+      newContent = newContent.replace(caseInviteRegex, '$1return null; /* [SELF-HOSTED] Invite Team skipped */');
+      modified = true;
+      log.ok(`Bypassed Invite Team case in ${relativePath}`);
+    }
+
+    // Pattern: Conditional rendering with step index
+    // {step === 3 && <CustomDomain />} -> {step === 3 && null}
+    const conditionalCustomDomainRegex = /(\{[^}]*step\s*===?\s*\d+\s*&&\s*)<\s*(?:CustomDomain|DomainStep)[^}]*\/?\s*>\s*\}/gi;
+    if (conditionalCustomDomainRegex.test(newContent)) {
+      newContent = newContent.replace(conditionalCustomDomainRegex, '$1null /* [SELF-HOSTED] */ }');
+      modified = true;
+      log.ok(`Removed conditional Custom Domain render in ${relativePath}`);
+    }
+
+    const conditionalInviteRegex = /(\{[^}]*step\s*===?\s*\d+\s*&&\s*)<\s*(?:InviteTeam|TeamInvite|InviteStep)[^}]*\/?\s*>\s*\}/gi;
+    if (conditionalInviteRegex.test(newContent)) {
+      newContent = newContent.replace(conditionalInviteRegex, '$1null /* [SELF-HOSTED] */ }');
+      modified = true;
+      log.ok(`Removed conditional Invite Team render in ${relativePath}`);
+    }
+  }
+
+  // =========================================================================
+  // Save changes
+  // =========================================================================
+
+  if (modified) {
+    fs.writeFileSync(file, newContent);
+    modifiedFiles++;
+    log.info(`  Saved: ${relativePath}\n`);
   }
 }
 
