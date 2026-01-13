@@ -71,6 +71,7 @@ jobs:
     name: 🔍 Validate Shell Scripts
     uses: bauer-group/automation-templates/.github/workflows/modules-validate-shellscript.yml@main
     with:
+      runs-on: '["self-hosted", "linux"]'
       scan-directory: '.'
       severity: 'error'
 
@@ -87,6 +88,7 @@ jobs:
       needs.validate-scripts.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/modules-semantic-release.yml@main
     with:
+      runs-on: '["self-hosted", "linux"]'
       target-branch: 'main'
       dry-run: false
       force-release: ${{ inputs.force-release || false }}
