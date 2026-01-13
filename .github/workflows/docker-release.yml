@@ -105,6 +105,7 @@ jobs:
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       runs-on: '["self-hosted", "linux"]'
+      cache-enabled: false # Self-hosted runners have no access to GitHub Actions cache
       deploy-environment: 'production'
       publish-to: 'both'
       ghcr-image-name: 'bauer-group/CS-ScreenRecorder/screen-recorder'
@@ -138,6 +139,7 @@ jobs:
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       runs-on: '["self-hosted", "linux"]'
+      cache-enabled: false # Self-hosted runners have no access to GitHub Actions cache
       publish-to: 'ghcr'
       ghcr-image-name: 'bauer-group/cs-screenrecorder/screen-recorder'
 
