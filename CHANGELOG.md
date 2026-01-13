@@ -1,3 +1,10 @@
+## [0.5.1](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.0...v0.5.1) (2026-01-13)
+
+
+### Bug Fixes
+
+* implement helper function to skip irrelevant onboarding files for self-hosted deployments ([0276c47](https://github.com/bauer-group/CS-ScreenRecorder/commit/0276c47971b0ca1c097f17999666fec705b826b0))
+
 # [0.5.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.7...v0.5.0) (2026-01-13)
 
 
