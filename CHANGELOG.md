@@ -1,3 +1,16 @@
+# [0.5.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.7...v0.5.0) (2026-01-13)
+
+
+### Bug Fixes
+
+* add options for using pre-built branded image or official Cap image in Docker configurations ([a7685f9](https://github.com/bauer-group/CS-ScreenRecorder/commit/a7685f90e44eea627f0dd940cf60c558916d6492))
+* specify 'runs-on' configuration for validation and release jobs to use self-hosted Linux environment ([55af57d](https://github.com/bauer-group/CS-ScreenRecorder/commit/55af57d586dac48df39d7010434dddac3ef47670))
+
+
+### Features
+
+* implement patch to skip onboarding steps for self-hosted deployments ([332482c](https://github.com/bauer-group/CS-ScreenRecorder/commit/332482c4700f02b7c65d4793107e2075cdc48129))
+
 ## [0.4.7](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.4.6...v0.4.7) (2026-01-12)
 
 
