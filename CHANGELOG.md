@@ -1,3 +1,10 @@
+## [0.5.3](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.2...v0.5.3) (2026-01-13)
+
+
+### Bug Fixes
+
+* clarify reason for replacement of Microsoft Entra ID patch ([0a2da52](https://github.com/bauer-group/CS-ScreenRecorder/commit/0a2da523ca537ececa6d0b84097cb1b1bde6e913))
+
 ## [0.5.2](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.1...v0.5.2) (2026-01-13)
 
 
