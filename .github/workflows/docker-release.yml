@@ -101,6 +101,7 @@ jobs:
     if: needs.release.outputs.release-created == 'true'
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
+      runs-on: '["self-hosted", "linux"]'
       deploy-environment: 'production'
       publish-to: 'both'
       ghcr-image-name: 'bauer-group/CS-ScreenRecorder/screen-recorder'
@@ -133,6 +134,7 @@ jobs:
       needs.validate-scripts.result == 'success'
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
+      runs-on: '["self-hosted", "linux"]'
       publish-to: 'ghcr'
       ghcr-image-name: 'bauer-group/cs-screenrecorder/screen-recorder'
 
