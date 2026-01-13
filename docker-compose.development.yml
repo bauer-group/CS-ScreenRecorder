@@ -71,10 +71,10 @@ services:
       # -- Time Zone --
       - TZ=${TIME_ZONE:-Etc/UTC}
 
-      # -- Core Settings --
+      # -- Core Settings (hardcoded for local development) --
       # - NODE_ENV=${NODE_ENV:-development}
-      - WEB_URL=${WEB_URL:-http://localhost:3000}
-      - NEXTAUTH_URL=${WEB_URL:-http://localhost:3000}
+      - WEB_URL=http://localhost:${EXPOSED_APP_PORT:-3000}
+      - NEXTAUTH_URL=http://localhost:${EXPOSED_APP_PORT:-3000}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
 
       # -- Database (static: cap/cap) --
