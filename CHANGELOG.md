@@ -1,3 +1,11 @@
+## [0.5.2](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.1...v0.5.2) (2026-01-13)
+
+
+### Bug Fixes
+
+* disable cache for self-hosted runners in Docker build jobs ([d8060c7](https://github.com/bauer-group/CS-ScreenRecorder/commit/d8060c74cb4018343825051cda30b321ab862037))
+* update documentation to indicate replacement by 006-microsoft-entra-id.ts ([7a43c4a](https://github.com/bauer-group/CS-ScreenRecorder/commit/7a43c4ae3dc0c6ea4ee45eef11a482d1a505ac6d))
+
 ## [0.5.1](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.0...v0.5.1) (2026-01-13)
 
 
