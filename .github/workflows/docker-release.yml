@@ -36,6 +36,7 @@ jobs:
     name: 🔍 Validate Docker Compose
     uses: bauer-group/automation-templates/.github/workflows/modules-validate-compose.yml@main
     with:
+      runs-on: '["self-hosted", "linux"]'
       compose-files: '["docker-compose.coolify.yml", "docker-compose.traefik.yml", "docker-compose.development.yml"]'
       env-template: |
         {

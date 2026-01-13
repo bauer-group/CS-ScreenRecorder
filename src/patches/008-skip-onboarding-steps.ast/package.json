@@ -1,0 +1,12 @@
+{
+  "name": "skip-onboarding-steps-patch",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Skip Custom Domain and Invite Team onboarding steps for self-hosted deployments",
+  "scripts": {
+    "patch": "node index.mjs"
+  },
+  "dependencies": {
+    "glob": "^10.0.0"
+  }
+}
