@@ -41,7 +41,7 @@ jobs:
         {
           "STACK_NAME": "cap_ci_test",
           "CAP_VERSION": "latest",
-          "MYSQL_VERSION": "8.0",
+          "MYSQL_VERSION": "8.4",
           "MINIO_VERSION": "latest",
           "TIME_ZONE": "UTC",
           "PROXY_NETWORK": "EDGEPROXY",

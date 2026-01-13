@@ -128,7 +128,7 @@ services:
   # ---------------------------------------------------------------------------
   # Tuned for: 4-8 GB RAM, SSD/NVMe storage
   mysql-server:
-    image: mysql:${MYSQL_VERSION:-8.0}
+    image: mysql:${MYSQL_VERSION:-8.4}
     restart: unless-stopped
     container_name: SCREENRECORDER_DATABASE
     command: >
@@ -205,7 +205,6 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-admin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_SITE_REGION=${AWS_S3_REGION:-global}
-      - MINIO_SITE_NAME=SCREENRECORDER
       - MINIO_API_CORS_ALLOW_ORIGIN=*
     expose:
       - 9000/tcp
