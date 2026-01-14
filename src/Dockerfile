@@ -117,9 +117,9 @@ ENV NEXT_PUBLIC_WEB_URL="http://localhost:3000" \
     AWS_REGION="global" \
     AWS_DEFAULT_REGION="global" \
     S3_PATH_STYLE="true" \
-    S3_INTERNAL_ENDPOINT="http://localhost:9000" \
-    S3_PUBLIC_ENDPOINT="http://localhost:9000" \
-    CAP_AWS_BUCKET_URL="http://localhost:9000/media" \
+    S3_INTERNAL_ENDPOINT="http://minio-server:9000" \
+    S3_PUBLIC_ENDPOINT="http://minio-server:9000" \
+    CAP_AWS_BUCKET_URL="http://minio-server:9000/media" \
     NODE_ENV="production"
 
 # Build the web application
