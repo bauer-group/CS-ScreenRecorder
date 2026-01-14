@@ -110,8 +110,16 @@ ENV NEXT_PUBLIC_WEB_URL="http://localhost:3000" \
     DATABASE_URL="mysql://build:build@localhost:3306/cap" \
     NEXTAUTH_SECRET="build-time-placeholder-secret-32chars" \
     NEXTAUTH_URL="http://localhost:3000" \
-    CAP_AWS_BUCKET="build-bucket" \
+    CAP_AWS_BUCKET="media" \
+    CAP_AWS_ACCESS_KEY="cap" \
+    CAP_AWS_SECRET_KEY="build-placeholder" \
     CAP_AWS_REGION="global" \
+    AWS_REGION="global" \
+    AWS_DEFAULT_REGION="global" \
+    S3_PATH_STYLE="true" \
+    S3_INTERNAL_ENDPOINT="http://localhost:9000" \
+    S3_PUBLIC_ENDPOINT="http://localhost:9000" \
+    CAP_AWS_BUCKET_URL="http://localhost:9000/media" \
     NODE_ENV="production"
 
 # Build the web application
