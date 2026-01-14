@@ -1,3 +1,10 @@
+## [0.5.7](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.6...v0.5.7) (2026-01-14)
+
+
+### Bug Fixes
+
+* replace removed upgrade components with null for self-hosted deployments ([d4084af](https://github.com/bauer-group/CS-ScreenRecorder/commit/d4084af8286f012e799c9b47fbbc5746179b940d))
+
 ## [0.5.6](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.5...v0.5.6) (2026-01-14)
 
 
