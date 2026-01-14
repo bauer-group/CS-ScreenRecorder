@@ -265,7 +265,9 @@ async function main() {
     }
 
     // Pattern: Billing settings card/section containing "billing details" or "Manage Billing"
-    const billingCardRegex = /<(?:Card|div|section)[^>]*>[\s\S]*?(?:billing\s*details|Manage\s*Billing|View\s*and\s*manage\s*your\s*billing)[\s\S]*?<\/(?:Card|div|section)>/gi;
+    // IMPORTANT: Only match specific card components (Card, SettingsCard) to avoid breaking
+    // nested JSX structures. Don't match generic div/section as they may have nesting issues.
+    const billingCardRegex = /<(Card|SettingsCard|CardContent)[^>]*>[\s\S]*?(?:billing\s*details|Manage\s*Billing|View\s*and\s*manage\s*your\s*billing)[\s\S]*?<\/\1>/gi;
     if (billingCardRegex.test(newContent) && relativePath.includes('settings')) {
       newContent = newContent.replace(billingCardRegex, '{/* [SELF-HOSTED] Billing section removed */}');
       log.ok(`Removed billing settings section in ${relativePath}`);
