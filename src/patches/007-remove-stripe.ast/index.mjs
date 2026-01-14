@@ -256,22 +256,26 @@ async function main() {
       modified = true;
     }
 
-    // Pattern: "Manage Billing" button/link (self-closing)
-    const manageBillingRegex = /<(Button|Link|a)[^>]*(?:onClick[^>]*(?:billing|stripe|subscription)|href[^>]*(?:billing|stripe))[^>]*>[\s\S]*?(?:Manage\s*Billing|billing)[\s\S]*?<\/\1>/gi;
-    if (manageBillingRegex.test(newContent)) {
-      newContent = newContent.replace(manageBillingRegex, '{/* [SELF-HOSTED] Manage Billing removed */}');
+    // Pattern: "Manage Billing" button - only match buttons where the TEXT contains "Manage Billing"
+    // We look for the text between > and </Button>, not just any billing reference in attributes
+    // This is safer than matching based on onClick handlers which could match unrelated buttons
+    const manageBillingButtonRegex = /<Button[^>]*>\s*(?:\{[^}]*\?\s*)?["']?Manage\s*Billing["']?\s*(?::[^}]*\})?\s*<\/Button>/gi;
+    if (manageBillingButtonRegex.test(newContent)) {
+      newContent = newContent.replace(manageBillingButtonRegex, '{/* [SELF-HOSTED] Manage Billing button removed */}');
       log.ok(`Removed Manage Billing button in ${relativePath}`);
       modified = true;
     }
 
-    // Pattern: Billing settings card/section containing "billing details" or "Manage Billing"
-    // IMPORTANT: Only match specific card components (Card, SettingsCard) to avoid breaking
-    // nested JSX structures. Don't match generic div/section as they may have nesting issues.
-    const billingCardRegex = /<(Card|SettingsCard|CardContent)[^>]*>[\s\S]*?(?:billing\s*details|Manage\s*Billing|View\s*and\s*manage\s*your\s*billing)[\s\S]*?<\/\1>/gi;
-    if (billingCardRegex.test(newContent) && relativePath.includes('settings')) {
-      newContent = newContent.replace(billingCardRegex, '{/* [SELF-HOSTED] Billing section removed */}');
-      log.ok(`Removed billing settings section in ${relativePath}`);
-      modified = true;
+    // Pattern: Billing Card component in BillingCard.tsx
+    // Only match the specific BillingCard component file, not nested structures
+    if (relativePath.includes('BillingCard.tsx')) {
+      // Replace the entire Card that contains billing text
+      const billingCardContentRegex = /<Card[^>]*>[\s\S]*?(?:View and manage your billing|billing details)[\s\S]*?<\/Card>/gi;
+      if (billingCardContentRegex.test(newContent)) {
+        newContent = newContent.replace(billingCardContentRegex, '{/* [SELF-HOSTED] Billing Card removed */}');
+        log.ok(`Removed billing card content in ${relativePath}`);
+        modified = true;
+      }
     }
 
     // Pattern: Hide entire billing-related components
