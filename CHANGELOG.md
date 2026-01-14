@@ -1,3 +1,11 @@
+## [0.5.6](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.5...v0.5.6) (2026-01-14)
+
+
+### Bug Fixes
+
+* improve regex for removing billing components in self-hosted deployments ([bcc2591](https://github.com/bauer-group/CS-ScreenRecorder/commit/bcc259156db350374b237a2292eb97b7ec15c2a5))
+* refine billing card regex to prevent breaking nested JSX structures ([ae72d47](https://github.com/bauer-group/CS-ScreenRecorder/commit/ae72d4790e7dd9087ca784dc38a9f24319780534))
+
 ## [0.5.5](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.4...v0.5.5) (2026-01-14)
 
 
