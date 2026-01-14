@@ -1,3 +1,11 @@
+## [0.5.4](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.3...v0.5.4) (2026-01-14)
+
+
+### Bug Fixes
+
+* update AWS configuration in Dockerfile for local development ([bb7dd0e](https://github.com/bauer-group/CS-ScreenRecorder/commit/bb7dd0e2a1120ac8891cb96aa0ed5c41759b2c3c))
+* update S3 endpoint URLs to use minio-server for local development ([bf1fa1c](https://github.com/bauer-group/CS-ScreenRecorder/commit/bf1fa1cc9010af93f6121e0f4950c9e64c0f8603))
+
 ## [0.5.3](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.2...v0.5.3) (2026-01-13)
 
 
