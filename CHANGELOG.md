@@ -1,3 +1,12 @@
+## [0.5.5](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.4...v0.5.5) (2026-01-14)
+
+
+### Bug Fixes
+
+* remove billing-related components for self-hosted deployments ([e534021](https://github.com/bauer-group/CS-ScreenRecorder/commit/e534021b2759bff60a35d3b7b5d4fba3b348b51c))
+* skip "Custom Domain" and "Invite your team" onboarding steps for self-hosted deployments ([8f887fb](https://github.com/bauer-group/CS-ScreenRecorder/commit/8f887fbfcb8dbaf035dabd05fca4e2d402e9d9e5))
+* update S3 endpoint URLs to use dynamic hostname for internal access ([c7b3379](https://github.com/bauer-group/CS-ScreenRecorder/commit/c7b3379fabb4383784f1fa16537fc918b19956dd))
+
 ## [0.5.4](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.3...v0.5.4) (2026-01-14)
 
 
