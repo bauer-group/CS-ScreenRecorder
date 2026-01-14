@@ -243,7 +243,7 @@ async function main() {
     // Pattern: <UpgradeButton ... /> or <PricingCard ... />
     const upgradeComponentRegex = /<(UpgradeButton|UpgradePrompt|PricingCard|SubscriptionBanner|PaywallModal)[^>]*\/>/g;
     if (upgradeComponentRegex.test(newContent)) {
-      newContent = newContent.replace(upgradeComponentRegex, '{/* [SELF-HOSTED] <$1 /> removed */}');
+      newContent = newContent.replace(upgradeComponentRegex, '{null}');
       log.ok(`Removed upgrade component in ${relativePath}`);
       modified = true;
     }
@@ -251,39 +251,24 @@ async function main() {
     // Pattern: <UpgradeButton>...</UpgradeButton>
     const upgradeComponentBlockRegex = /<(UpgradeButton|UpgradePrompt|PricingCard|SubscriptionBanner|PaywallModal)[^>]*>[\s\S]*?<\/\1>/g;
     if (upgradeComponentBlockRegex.test(newContent)) {
-      newContent = newContent.replace(upgradeComponentBlockRegex, '{/* [SELF-HOSTED] $1 removed */}');
+      newContent = newContent.replace(upgradeComponentBlockRegex, '{null}');
       log.ok(`Removed upgrade component block in ${relativePath}`);
       modified = true;
     }
 
-    // Pattern: "Manage Billing" button - only match buttons where the TEXT contains "Manage Billing"
-    // We look for the text between > and </Button>, not just any billing reference in attributes
-    // This is safer than matching based on onClick handlers which could match unrelated buttons
-    const manageBillingButtonRegex = /<Button[^>]*>\s*(?:\{[^}]*\?\s*)?["']?Manage\s*Billing["']?\s*(?::[^}]*\})?\s*<\/Button>/gi;
-    if (manageBillingButtonRegex.test(newContent)) {
-      newContent = newContent.replace(manageBillingButtonRegex, '{/* [SELF-HOSTED] Manage Billing button removed */}');
-      log.ok(`Removed Manage Billing button in ${relativePath}`);
-      modified = true;
-    }
-
-    // Pattern: Billing Card component in BillingCard.tsx
-    // Only match the specific BillingCard component file, not nested structures
+    // Pattern: BillingCard.tsx - make it return null instead of billing UI
+    // This is safer than removing components which can cause React rendering errors
     if (relativePath.includes('BillingCard.tsx')) {
-      // Replace the entire Card that contains billing text
-      const billingCardContentRegex = /<Card[^>]*>[\s\S]*?(?:View and manage your billing|billing details)[\s\S]*?<\/Card>/gi;
-      if (billingCardContentRegex.test(newContent)) {
-        newContent = newContent.replace(billingCardContentRegex, '{/* [SELF-HOSTED] Billing Card removed */}');
-        log.ok(`Removed billing card content in ${relativePath}`);
+      // Add early return null at the start of the component
+      const billingCardReturnRegex = /(export\s+const\s+BillingCard\s*=\s*\([^)]*\)\s*(?::\s*\w+)?\s*=>\s*\{)/;
+      if (billingCardReturnRegex.test(newContent)) {
+        newContent = newContent.replace(
+          billingCardReturnRegex,
+          '$1\n  // [SELF-HOSTED] Billing UI disabled\n  return null;\n'
+        );
+        log.ok(`Disabled BillingCard component in ${relativePath}`);
         modified = true;
       }
-    }
-
-    // Pattern: Hide entire billing-related components
-    const billingComponentRegex = /<(BillingCard|BillingSettings|ManageBilling|SubscriptionCard|BillingSection)[^>]*(?:\/>|>[\s\S]*?<\/\1>)/g;
-    if (billingComponentRegex.test(newContent)) {
-      newContent = newContent.replace(billingComponentRegex, '{/* [SELF-HOSTED] $1 removed */}');
-      log.ok(`Removed billing component in ${relativePath}`);
-      modified = true;
     }
 
     // =========================================================================
