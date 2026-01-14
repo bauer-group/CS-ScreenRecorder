@@ -60,9 +60,9 @@ services:
       - CAP_AWS_ACCESS_KEY=cap
       - CAP_AWS_SECRET_KEY=${CAP_AWS_SECRET_KEY}
       - S3_PATH_STYLE=true
-      - S3_INTERNAL_ENDPOINT=http://minio-server:9000
-      - S3_PUBLIC_ENDPOINT=${S3_PUBLIC_ENDPOINT}
-      - CAP_AWS_BUCKET_URL=${CAP_AWS_BUCKET_URL}
+      - S3_INTERNAL_ENDPOINT=https://${S3_HOSTNAME}
+      - S3_PUBLIC_ENDPOINT=https://${S3_HOSTNAME}
+      - CAP_AWS_BUCKET_URL=https://${S3_HOSTNAME}/media
 
       # -- Video Settings --
       - CAP_VIDEOS_DEFAULT_PUBLIC=${CAP_VIDEOS_DEFAULT_PUBLIC:-false}
