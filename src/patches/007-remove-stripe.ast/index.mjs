@@ -256,6 +256,30 @@ async function main() {
       modified = true;
     }
 
+    // Pattern: "Manage Billing" button/link (self-closing)
+    const manageBillingRegex = /<(Button|Link|a)[^>]*(?:onClick[^>]*(?:billing|stripe|subscription)|href[^>]*(?:billing|stripe))[^>]*>[\s\S]*?(?:Manage\s*Billing|billing)[\s\S]*?<\/\1>/gi;
+    if (manageBillingRegex.test(newContent)) {
+      newContent = newContent.replace(manageBillingRegex, '{/* [SELF-HOSTED] Manage Billing removed */}');
+      log.ok(`Removed Manage Billing button in ${relativePath}`);
+      modified = true;
+    }
+
+    // Pattern: Billing settings card/section containing "billing details" or "Manage Billing"
+    const billingCardRegex = /<(?:Card|div|section)[^>]*>[\s\S]*?(?:billing\s*details|Manage\s*Billing|View\s*and\s*manage\s*your\s*billing)[\s\S]*?<\/(?:Card|div|section)>/gi;
+    if (billingCardRegex.test(newContent) && relativePath.includes('settings')) {
+      newContent = newContent.replace(billingCardRegex, '{/* [SELF-HOSTED] Billing section removed */}');
+      log.ok(`Removed billing settings section in ${relativePath}`);
+      modified = true;
+    }
+
+    // Pattern: Hide entire billing-related components
+    const billingComponentRegex = /<(BillingCard|BillingSettings|ManageBilling|SubscriptionCard|BillingSection)[^>]*(?:\/>|>[\s\S]*?<\/\1>)/g;
+    if (billingComponentRegex.test(newContent)) {
+      newContent = newContent.replace(billingComponentRegex, '{/* [SELF-HOSTED] $1 removed */}');
+      log.ok(`Removed billing component in ${relativePath}`);
+      modified = true;
+    }
+
     // =========================================================================
     // Strategy 5: Neutralize Stripe API route handlers
     // =========================================================================
