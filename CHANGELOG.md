@@ -1,3 +1,10 @@
+# [0.8.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.7.0...v0.8.0) (2026-01-15)
+
+
+### Features
+
+* update Cap version to 0.4.3 in configuration files and scripts ([d982854](https://github.com/bauer-group/CS-ScreenRecorder/commit/d982854b83c6385ea665eeeb5a9c449baf25af9a))
+
 # [0.7.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.6.0...v0.7.0) (2026-01-15)
 
 
