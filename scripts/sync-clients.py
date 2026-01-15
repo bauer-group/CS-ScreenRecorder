@@ -17,7 +17,7 @@ Usage:
     python3 sync-clients.py [--version VERSION]
 
 Arguments:
-    --version VERSION  Specific version tag (e.g., cap-v0.4.1)
+    --version VERSION  Specific version tag (e.g., cap-v0.4.3)
                        If not specified, uses CAP_VERSION from .env
 
 Environment Variables (from .env):
@@ -253,7 +253,7 @@ def upload_to_s3(s3_client, local_path: Path, s3_key: str, content_type: str) ->
 
 def main():
     parser = argparse.ArgumentParser(description="Sync Cap clients to MinIO bucket")
-    parser.add_argument('--version', '-v', help="Specific version tag (e.g., cap-v0.4.1)")
+    parser.add_argument('--version', '-v', help="Specific version tag (e.g., cap-v0.4.3)")
     args = parser.parse_args()
 
     load_env()

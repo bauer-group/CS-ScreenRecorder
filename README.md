@@ -22,7 +22,8 @@ This repository provides production-ready Docker Compose configurations for self
 | Screen Recorder Version | Cap Version  | Status       |
 | ----------------------- | ------------ | ------------ |
 | 0.5.x                   | cap-v0.3.83  | ✅ Stable    |
-| 0.6.x                   | cap-v0.4.1+  | ✅ Supported |
+| 0.6.x                   | cap-v0.4.1+  | ✅ Stable |
+| 0.7.x                   | cap-v0.4.3+  | ✅ Stable |
 
 **Note:** Cap 0.4.x introduces cloud services (Workflow, Tinybird) that are automatically disabled for self-hosted deployments.
 
