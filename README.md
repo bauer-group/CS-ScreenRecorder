@@ -9,12 +9,39 @@ This repository provides production-ready Docker Compose configurations for self
 - **Custom Branding** - BAUER GROUP logos and styling
 - **Microsoft Entra ID** - Azure AD OAuth (single/multi-tenant)
 - **SMTP Email** - Use your own mail server (no cloud dependency)
+- **Unlimited Pro License** - All Pro features enabled, no Stripe payments
 - **SSD-optimized MySQL** - InnoDB tuning for NVMe/SSD storage
 - **MinIO with Init Container** - Automatic bucket and user setup
 - **Three Deployment Options** - Development, Traefik (Production), Coolify (PaaS)
 - **Automatic Secret Generation** - Secure passwords with one script
 - **Health Checks** - All services monitored
 - **Log Rotation** - Configured out of the box
+
+## Cap Version Compatibility
+
+| Screen Recorder Version | Cap Version  | Status       |
+| ----------------------- | ------------ | ------------ |
+| 0.5.x                   | cap-v0.3.83  | ✅ Stable    |
+| 0.6.x                   | cap-v0.4.1+  | ✅ Supported |
+
+**Note:** Cap 0.4.x introduces cloud services (Workflow, Tinybird) that are automatically disabled for self-hosted deployments.
+
+## Self-Hosted Patches
+
+The following patches are automatically applied during Docker build:
+
+| Patch | Description |
+| ----- | ----------- |
+| `002-smtp-email.ast` | SMTP email support (alternative to Resend) |
+| `003-branding.sh` | Custom BAUER GROUP branding |
+| `004-redirects.ast` | URL redirects for self-hosted deployment |
+| `005-remove-intercom.ast` | Remove Intercom chat widget |
+| `006-replace-google-with-microsoft.ast` | Replace Google OAuth with Microsoft Entra ID |
+| `007-remove-stripe.ast` | Disable Stripe payments, enable unlimited Pro license |
+| `008-skip-onboarding-steps.ast` | Skip cloud-only onboarding steps |
+| `009-disable-workflow.ast` | Disable cloud services (Workflow, Tinybird) |
+
+All patches are AST-based (using ts-morph) for robust version compatibility.
 
 ## Quick Start
 
@@ -102,11 +129,15 @@ CS-ScreenRecorder/
 │   └── generate-assets.sh        # Logo/favicon generator
 ├── src/
 │   ├── Dockerfile                # Custom Cap image
-│   ├── patches/                  # Source code patches
-│   │   ├── 001-microsoft-entra-id.sh
-│   │   ├── 002-smtp-email.sh
-│   │   ├── 003-branding.sh
-│   │   └── 004-redirects.sh      # URL redirects (/download → cap.so)
+│   ├── patches/                  # Source code patches (AST-based)
+│   │   ├── 002-smtp-email.ast/           # SMTP email support
+│   │   ├── 003-branding.sh               # Custom branding
+│   │   ├── 004-redirects.ast/            # URL redirects
+│   │   ├── 005-remove-intercom.ast/      # Remove Intercom chat
+│   │   ├── 006-replace-google-with-microsoft.ast/  # Azure AD OAuth
+│   │   ├── 007-remove-stripe.ast/        # Disable payments (Pro license)
+│   │   ├── 008-skip-onboarding-steps.ast/  # Skip cloud onboarding
+│   │   └── 009-disable-workflow.ast/     # Disable cloud services
 │   └── branding/                 # Logo sources
 │       ├── branding.env          # Branding config
 │       └── logo-source-*.{eps,svg,png}
