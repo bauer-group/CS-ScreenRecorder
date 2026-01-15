@@ -1,3 +1,11 @@
+# [0.6.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.7...v0.6.0) (2026-01-15)
+
+
+### Features
+
+* add patch to disable workflow and cloud services for self-hosted deployments // Cap 0.4.1 führte Tinybird Analytics als neue Abhängigkeit ein ([fa0b5af](https://github.com/bauer-group/CS-ScreenRecorder/commit/fa0b5af6f5c72db684aa7eacb25f1d22fac0c629))
+* update CAP_VERSION to cap-v0.4.1 across configuration files and scripts ([d0aeadd](https://github.com/bauer-group/CS-ScreenRecorder/commit/d0aeadd70d8340dd1145ef1d9a721809696e1227))
+
 ## [0.5.7](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.6...v0.5.7) (2026-01-14)
 
 
