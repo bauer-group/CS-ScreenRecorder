@@ -174,7 +174,7 @@ LABEL org.opencontainers.image.source="https://github.com/bauer-group/CS-ScreenR
 LABEL org.opencontainers.image.url="https://github.com/bauer-group/CS-ScreenRecorder"
 LABEL org.opencontainers.image.documentation="https://github.com/bauer-group/CS-ScreenRecorder#readme"
 LABEL org.opencontainers.image.description="Screen Recorder - BAUER GROUP Edition"
-LABEL org.opencontainers.image.version="0.5.7"
+LABEL org.opencontainers.image.version="0.6.0"
 
 # Extended Labels
 LABEL org.opencontainers.image.base.name="https://github.com/CapSoftware/Cap#${CAP_VERSION}"
