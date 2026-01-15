@@ -3,11 +3,12 @@
  * Remove Stripe Payment Integration Patch
  *
  * Disables Stripe payment functionality for self-hosted deployments:
- * - Neutralizes Stripe SDK imports and API calls
+ * - Replaces Stripe utility with mock that returns null
  * - Makes subscription checks return "active" status (all features unlocked)
  * - Hides upgrade prompts and pricing UI
- * - Simulates an "unlimited Pro license" by making all relevant checks return
- * 
+ * - Simulates an "unlimited Pro license"
+ *
+ * Compatible with Cap v0.3.x and v0.4.x
  */
 
 import fs from 'fs';
@@ -38,10 +39,71 @@ let modifiedFiles = 0;
 let skippedFiles = 0;
 
 // =============================================================================
+// Mock Stripe utility - replaces the real stripe.ts
+// =============================================================================
+const MOCK_STRIPE_TS = `// [SELF-HOSTED] Mock Stripe - all payments disabled, Pro features enabled
+
+// Stripe is always "unavailable" in self-hosted mode
+export const STRIPE_AVAILABLE = () => false;
+
+// Create a recursive proxy that handles any method chain like stripe().customers.list()
+// All methods return empty results instead of crashing
+const createMockProxy = (): any => {
+  const handler: ProxyHandler<any> = {
+    get: (_target, prop) => {
+      // Return mock data for common Stripe response properties
+      if (prop === 'data') return [];
+      if (prop === 'has_more') return false;
+      if (prop === 'url') return null;
+      if (prop === 'id') return 'mock_id';
+      if (prop === 'then') return undefined; // Not a promise
+      if (prop === 'catch') return undefined; // Not a promise
+      if (prop === 'finally') return undefined; // Not a promise
+      // Return another proxy for method chaining
+      return createMockProxy();
+    },
+    apply: () => {
+      // When called as a function, return a resolved promise with mock data
+      // that covers all common Stripe response patterns
+      return Promise.resolve({
+        data: [],
+        has_more: false,
+        url: null,  // For billingPortal.sessions.create()
+        id: 'mock_id',
+        object: 'mock',
+        status: 'active',
+      });
+    },
+  };
+  return new Proxy(function() {}, handler);
+};
+
+// stripe() returns the mock proxy - all calls are safely neutralized
+export const stripe = () => createMockProxy();
+`;
+
+// =============================================================================
 // Main patch function
 // =============================================================================
 async function main() {
   log.info('Searching for Stripe and payment-related code...\n');
+
+  // =========================================================================
+  // CRITICAL FIX: Replace stripe.ts with mock implementation
+  // This prevents "Stripe is not defined" errors
+  // =========================================================================
+  const stripeUtilPaths = [
+    path.join(APP_DIR, 'packages/utils/src/lib/stripe/stripe.ts'),
+    path.join(APP_DIR, 'packages/utils/stripe.ts'),
+  ];
+
+  for (const stripePath of stripeUtilPaths) {
+    if (fs.existsSync(stripePath)) {
+      fs.writeFileSync(stripePath, MOCK_STRIPE_TS);
+      log.ok(`Replaced stripe utility with mock: ${path.relative(APP_DIR, stripePath)}`);
+      modifiedFiles++;
+    }
+  }
 
   // Find all TypeScript/JavaScript files
   const files = await glob('**/*.{ts,tsx,js,jsx,mjs}', {
@@ -70,48 +132,18 @@ async function main() {
     }
 
     const relativePath = path.relative(APP_DIR, file);
+
+    // Skip the stripe utility we already replaced
+    if (relativePath.includes('stripe/stripe.ts') || relativePath.includes('stripe.ts')) {
+      continue;
+    }
+
     let modified = false;
     let newContent = content;
 
     // =========================================================================
-    // Strategy 1: Neutralize Stripe SDK imports
+    // Strategy 1: Make subscription checks return "active" / true
     // =========================================================================
-
-    // import Stripe from 'stripe';
-    const stripeImportRegex = /^import\s+(?:Stripe|stripe|\{[^}]*\})\s+from\s+['"]stripe['"];?\s*$/gm;
-    if (stripeImportRegex.test(newContent)) {
-      newContent = newContent.replace(stripeImportRegex, '// [SELF-HOSTED] $&');
-      log.ok(`Disabled Stripe import in ${relativePath}`);
-      modified = true;
-    }
-
-    // import { loadStripe } from '@stripe/stripe-js';
-    const stripeJsImportRegex = /^import\s+\{[^}]*\}\s+from\s+['"]@stripe\/stripe-js['"];?\s*$/gm;
-    if (stripeJsImportRegex.test(newContent)) {
-      newContent = newContent.replace(stripeJsImportRegex, '// [SELF-HOSTED] $&');
-      log.ok(`Disabled @stripe/stripe-js import in ${relativePath}`);
-      modified = true;
-    }
-
-    // =========================================================================
-    // Strategy 2: Neutralize Stripe client initialization
-    // =========================================================================
-
-    // const stripe = new Stripe(...) or Stripe(...)
-    const stripeInitRegex = /(?:const|let|var)\s+stripe\s*=\s*(?:new\s+)?Stripe\s*\([^)]*\)\s*;?/g;
-    if (stripeInitRegex.test(newContent)) {
-      newContent = newContent.replace(stripeInitRegex, '/* [SELF-HOSTED] $& */ const stripe = null;');
-      log.ok(`Neutralized Stripe initialization in ${relativePath}`);
-      modified = true;
-    }
-
-    // =========================================================================
-    // Strategy 3: Make subscription checks return "active" / true
-    // =========================================================================
-
-    // Common patterns for subscription status checks
-    // subscriptionStatus === "active" -> true
-    // isSubscribed, isPro, hasSubscription -> true
 
     // Pattern: if (subscriptionStatus !== "active")
     const subCheckRegex = /subscriptionStatus\s*!==?\s*["']active["']/g;
@@ -138,9 +170,6 @@ async function main() {
     }
 
     // Pattern: stripeSubscriptionId checks in invite flow
-    // Only replace the NEGATED check (!organizationOwner.stripeSubscriptionId) with false
-    // Do NOT replace positive usages - those are actual value assignments that need the real value
-    // Handles both regular access (.) and optional chaining (?.)
     const stripeSubIdCheckRegex = /!organizationOwner\??\.stripeSubscriptionId/g;
     if (stripeSubIdCheckRegex.test(newContent)) {
       newContent = newContent.replace(stripeSubIdCheckRegex, 'false /* [SELF-HOSTED] subscription not required */');
@@ -149,15 +178,8 @@ async function main() {
     }
 
     // =========================================================================
-    // Strategy 3b: UNLIMITED SEATS for self-hosted (simulate Pro license)
+    // Strategy 2: UNLIMITED SEATS for self-hosted (simulate Pro license)
     // =========================================================================
-    //
-    // Target file: apps/web/utils/organization.ts
-    // Actual code:
-    //   const inviteQuota = organization?.inviteQuota ?? 1;
-    //   const remainingSeats = buildEnv.NEXT_PUBLIC_IS_CAP
-    //       ? Math.max(0, inviteQuota - totalUsedSeats)
-    //       : Number.MAX_SAFE_INTEGER;
 
     // Fix 1: Replace the entire calculateSeats function to always return unlimited
     const calculateSeatsRegex = /export\s+function\s+calculateSeats\s*\([^)]*\)\s*\{[\s\S]*?^}/gm;
@@ -187,13 +209,11 @@ async function main() {
     }
 
     // =========================================================================
-    // Strategy 3c: ENABLE ALL PRO FEATURES
+    // Strategy 3: ENABLE ALL PRO FEATURES
     // =========================================================================
 
-    // Pattern: isPro (positive check) -> true
-    const isProPositiveRegex = /\b(isPro|isSubscribed|hasActiveSubscription|hasPro)\b(?!\s*[=:])/g;
-    if (isProPositiveRegex.test(newContent) && !newContent.includes('[SELF-HOSTED]')) {
-      // Only replace in conditional contexts, not declarations
+    // Pattern: isPro in conditional contexts -> true
+    if (!newContent.includes('[SELF-HOSTED]')) {
       const conditionalProRegex = /(?:if\s*\(\s*|&&\s*|\|\|\s*|\?\s*|:\s*)(isPro|isSubscribed|hasActiveSubscription|hasPro)\b/g;
       if (conditionalProRegex.test(newContent)) {
         newContent = newContent.replace(conditionalProRegex, (match, varName) => {
@@ -257,9 +277,7 @@ async function main() {
     }
 
     // Pattern: BillingCard.tsx - make it return null instead of billing UI
-    // This is safer than removing components which can cause React rendering errors
     if (relativePath.includes('BillingCard.tsx')) {
-      // Add early return null at the start of the component
       const billingCardReturnRegex = /(export\s+const\s+BillingCard\s*=\s*\([^)]*\)\s*(?::\s*\w+)?\s*=>\s*\{)/;
       if (billingCardReturnRegex.test(newContent)) {
         newContent = newContent.replace(
@@ -275,51 +293,22 @@ async function main() {
     // Strategy 5: Neutralize Stripe API route handlers
     // =========================================================================
 
-    // Check if this is a Stripe webhook or API route
     if (relativePath.includes('stripe') || relativePath.includes('webhook') || relativePath.includes('billing')) {
-      // Add early return for Stripe routes
-      const exportDefaultRegex = /export\s+(?:default\s+)?(?:async\s+)?function\s+(?:POST|GET|handler)/;
-      if (exportDefaultRegex.test(newContent) && hasStripe) {
-        // Add a disabled message at the top of the function
+      const handlerBodyRegex = /(export\s+(?:default\s+)?(?:async\s+)?function\s+(?:POST|GET|handler)\s*\([^)]*\)\s*\{)/;
+      if (handlerBodyRegex.test(newContent) && hasStripe) {
         newContent = newContent.replace(
-          exportDefaultRegex,
-          `// [SELF-HOSTED] Stripe routes disabled\n$&`
+          handlerBodyRegex,
+          `$1\n  // [SELF-HOSTED] Stripe disabled for self-hosted deployment\n  return new Response(JSON.stringify({ error: "Payments disabled in self-hosted mode" }), { status: 501, headers: { "Content-Type": "application/json" } });\n`
         );
-
-        // Try to make the handler return early with a message
-        const handlerBodyRegex = /(export\s+(?:default\s+)?(?:async\s+)?function\s+(?:POST|GET|handler)\s*\([^)]*\)\s*\{)/;
-        if (handlerBodyRegex.test(newContent)) {
-          newContent = newContent.replace(
-            handlerBodyRegex,
-            `$1\n  // [SELF-HOSTED] Stripe disabled for self-hosted deployment\n  return new Response(JSON.stringify({ error: "Payments disabled in self-hosted mode" }), { status: 501, headers: { "Content-Type": "application/json" } });\n`
-          );
-          log.ok(`Disabled Stripe API route in ${relativePath}`);
-          modified = true;
-        }
+        log.ok(`Disabled Stripe API route in ${relativePath}`);
+        modified = true;
       }
     }
 
     // =========================================================================
-    // Strategy 6: Handle stripe.* method calls
+    // Strategy 6: Handle getProStatus / checkSubscription type functions
     // =========================================================================
 
-    // Pattern: stripe.customers.create, stripe.subscriptions.retrieve, etc.
-    const stripeMethodRegex = /\bstripe\.(customers|subscriptions|products|prices|checkout|paymentIntents|invoices)\.\w+\s*\(/g;
-    if (stripeMethodRegex.test(newContent)) {
-      // Wrap in try-catch that returns null
-      newContent = newContent.replace(
-        stripeMethodRegex,
-        '/* [SELF-HOSTED] */ (async () => null)( /* $& */'
-      );
-      log.ok(`Neutralized Stripe API calls in ${relativePath}`);
-      modified = true;
-    }
-
-    // =========================================================================
-    // Strategy 7: Handle getProStatus / checkSubscription type functions
-    // =========================================================================
-
-    // Pattern: async function getProStatus or const getProStatus = async
     const proStatusFuncRegex = /((?:async\s+)?function\s+(?:getProStatus|checkSubscription|getSubscriptionStatus|isUserPro)\s*\([^)]*\)\s*\{)/;
     if (proStatusFuncRegex.test(newContent)) {
       newContent = newContent.replace(
@@ -330,7 +319,6 @@ async function main() {
       modified = true;
     }
 
-    // Arrow function variant: const getProStatus = async () => {
     const proStatusArrowRegex = /(const\s+(?:getProStatus|checkSubscription|getSubscriptionStatus|isUserPro)\s*=\s*(?:async\s*)?\([^)]*\)\s*=>\s*\{)/;
     if (proStatusArrowRegex.test(newContent)) {
       newContent = newContent.replace(
@@ -342,6 +330,21 @@ async function main() {
     }
 
     // =========================================================================
+    // Strategy 7: Neutralize manage-billing action
+    // =========================================================================
+    if (relativePath.includes('manage-billing')) {
+      const manageBillingRegex = /(export\s+async\s+function\s+manageBilling\s*\([^)]*\)\s*\{)/;
+      if (manageBillingRegex.test(newContent)) {
+        newContent = newContent.replace(
+          manageBillingRegex,
+          `$1\n  // [SELF-HOSTED] Billing management disabled\n  throw new Error("Billing is disabled in self-hosted mode");\n`
+        );
+        log.ok(`Disabled manageBilling in ${relativePath}`);
+        modified = true;
+      }
+    }
+
+    // =========================================================================
     // Save changes
     // =========================================================================
 
@@ -350,35 +353,8 @@ async function main() {
       modifiedFiles++;
       log.info(`  Saved: ${relativePath}\n`);
     } else if (hasStripe || hasPayment) {
-      // File has references but no patterns matched
       skippedFiles++;
       log.warn(`Contains payment references but no actionable patterns: ${relativePath}`);
-    }
-  }
-
-  // =========================================================================
-  // Check for Stripe in package.json (informational only)
-  // =========================================================================
-  log.info('\nChecking for Stripe dependencies...');
-
-  const packageFiles = await glob('**/package.json', {
-    cwd: APP_DIR,
-    ignore: ['**/node_modules/**'],
-    absolute: true
-  });
-
-  for (const pkgFile of packageFiles) {
-    try {
-      const pkg = JSON.parse(fs.readFileSync(pkgFile, 'utf8'));
-      const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-
-      if (deps['stripe'] || deps['@stripe/stripe-js']) {
-        const relativePath = path.relative(APP_DIR, pkgFile);
-        log.warn(`Found Stripe dependency in: ${relativePath}`);
-        log.warn('  Note: Dependency remains but functionality is disabled');
-      }
-    } catch (e) {
-      // Skip invalid package.json files
     }
   }
 
@@ -395,13 +371,14 @@ async function main() {
   }
 
   console.log(`\n${c.blue}UNLIMITED PRO LICENSE SIMULATION:${c.reset}`);
-  console.log(`  • Stripe SDK disabled`);
+  console.log(`  • Stripe utility replaced with mock (returns null)`);
+  console.log(`  • STRIPE_AVAILABLE = false`);
   console.log(`  • All subscription checks return "active"`);
   console.log(`  • isPro / isSubscribed = true`);
   console.log(`  • plan = "pro" (not "free")`);
   console.log(`  • Seats: UNLIMITED (Number.MAX_SAFE_INTEGER)`);
   console.log(`  • Upgrade prompts hidden`);
-  console.log(`  • All Pro features unlocked (transcript, summary, chapters)`);
+  console.log(`  • All Pro features unlocked`);
   console.log(`${c.green}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
 
   if (modifiedFiles === 0) {

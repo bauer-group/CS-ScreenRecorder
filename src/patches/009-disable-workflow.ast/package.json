@@ -1,0 +1,10 @@
+{
+  "name": "009-disable-workflow",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Disable workflow package for self-hosted deployments",
+  "main": "index.mjs",
+  "dependencies": {
+    "glob": "^10.3.10"
+  }
+}
