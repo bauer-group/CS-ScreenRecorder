@@ -7,6 +7,7 @@
  * - Removes the workflow wrapper from next.config.mjs
  * - Disables workflow-related imports (transcription feature)
  * - Fixes Tinybird analytics to not crash when TINYBIRD_HOST is missing
+ * - Adds early returns in workflow files to prevent execution
  *
  * Compatible with Cap v0.4.x
  */
