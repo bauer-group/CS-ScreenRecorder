@@ -1,3 +1,10 @@
+# [0.7.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.6.0...v0.7.0) (2026-01-15)
+
+
+### Features
+
+* add early returns in workflow files to prevent execution ([a01e065](https://github.com/bauer-group/CS-ScreenRecorder/commit/a01e065b98f8866df496fd704f0986235bbd48f1))
+
 # [0.6.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.5.7...v0.6.0) (2026-01-15)
 
 
