@@ -39,6 +39,7 @@ BRAND_APP_NAME="${BRAND_APP_NAME:-Screen Recorder}"
 BRAND_COMPANY_NAME="${BRAND_COMPANY_NAME:-BAUER GROUP}"
 BRAND_DESCRIPTION="${BRAND_APP_DESCRIPTION:-${BRAND_DESCRIPTION:-A screen recording solution by ${BRAND_COMPANY_NAME}.}}"
 BRAND_FULL_NAME="${BRAND_APP_NAME} [${BRAND_COMPANY_NAME}]"
+BRAND_VERSION="${BRAND_VERSION:-0.0.0}"
 
 # =============================================================================
 # BAUER GROUP Color System
@@ -71,6 +72,7 @@ echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━�
 echo ""
 echo -e "  App Name:      ${GREEN}${BRAND_FULL_NAME}${NC}"
 echo -e "  Company:       ${GREEN}${BRAND_COMPANY_NAME}${NC}"
+echo -e "  Version:       ${GREEN}${BRAND_VERSION}${NC}"
 echo -e "  Primary Color: ${GREEN}${BRAND_PRIMARY}${NC} (Orange)"
 echo -e "  Primary HSL:   ${GREEN}${BRAND_PRIMARY_HSL}${NC}"
 echo ""
@@ -400,7 +402,7 @@ fi
 # =============================================================================
 # 5. Replace absolute cap.so URLs with relative paths (for redirects)
 # =============================================================================
-echo -e "${BLUE}[5/6] Replacing absolute cap.so URLs with relative paths...${NC}"
+echo -e "${BLUE}[5/7] Replacing absolute cap.so URLs with relative paths...${NC}"
 
 # Replace https://cap.so/download with /download so the middleware redirect works
 find "$APP_DIR" -type f \( -name "*.tsx" -o -name "*.ts" -o -name "*.jsx" -o -name "*.js" \) 2>/dev/null | while read file; do
@@ -425,7 +427,7 @@ done
 # =============================================================================
 # 6. Update site config if exists
 # =============================================================================
-echo -e "${BLUE}[6/6] Patching additional config files...${NC}"
+echo -e "${BLUE}[6/7] Patching additional config files...${NC}"
 
 SITE_CONFIG="$APP_DIR/apps/web/config/site.ts"
 if [ -f "$SITE_CONFIG" ]; then
@@ -442,6 +444,38 @@ if [ -f "$CONSTANTS_FILE" ]; then
 fi
 
 # =============================================================================
+# 7. Replace copyright footer with BRAND_VERSION only
+# =============================================================================
+echo -e "${BLUE}[7/7] Patching sidebar footer to show version only...${NC}"
+
+# The sidebar shows "{COMPANY_NAME} {year}." - we want to show only version
+# Remove company name prefix and replace year with version
+find "$APP_DIR" -type f \( -name "*.tsx" -o -name "*.jsx" \) 2>/dev/null | while read file; do
+    # Pattern: "Cap Software, Inc. " or "{COMPANY_NAME} " before the year
+    # Replace the whole footer text pattern with just version
+    if grep -q "new Date().getFullYear()" "$file" 2>/dev/null; then
+        # Remove company prefix patterns before year (various formats)
+        # Pattern: Cap Software, Inc. {new Date().getFullYear()}
+        sed -i 's/Cap Software, Inc\. {new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
+        sed -i 's/Cap Software, Inc\.{new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
+        # Pattern: {COMPANY} {year} - generic JSX with company variable
+        sed -i 's/{[^}]*} {new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
+        # Pattern: just {new Date().getFullYear()} alone
+        sed -i "s/{new Date().getFullYear()}/\"${BRAND_VERSION}\"/g" "$file"
+        sed -i "s/{ new Date().getFullYear() }/\"${BRAND_VERSION}\"/g" "$file"
+        echo -e "${GREEN}  ✓ Replaced footer with version in $(basename "$file")${NC}"
+    fi
+    # Also handle any remaining company name + year patterns after branding patch
+    if grep -q "${BRAND_COMPANY_NAME}.*new Date" "$file" 2>/dev/null; then
+        sed -i 's/'"${BRAND_COMPANY_NAME}"' {new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
+        sed -i 's/'"${BRAND_COMPANY_NAME}"'{new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
+        echo -e "${GREEN}  ✓ Removed company prefix in $(basename "$file")${NC}"
+    fi
+done
+
+echo -e "${GREEN}  ✓ Footer version patching complete${NC}"
+
+# =============================================================================
 # Summary
 # =============================================================================
 echo ""
@@ -452,6 +486,7 @@ echo ""
 echo -e "Applied branding:"
 echo -e "  ${YELLOW}App Name${NC}:    ${BRAND_FULL_NAME}"
 echo -e "  ${YELLOW}Company${NC}:     ${BRAND_COMPANY_NAME}"
+echo -e "  ${YELLOW}Version${NC}:     ${BRAND_VERSION}"
 echo -e "  ${YELLOW}Description${NC}: ${BRAND_DESCRIPTION}"
 echo -e "  ${YELLOW}Primary${NC}:     ${BRAND_PRIMARY} / HSL(${BRAND_PRIMARY_HSL})"
 echo ""
