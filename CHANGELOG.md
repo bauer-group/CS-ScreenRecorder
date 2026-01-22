@@ -1,3 +1,11 @@
+## [0.8.1](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.8.0...v0.8.1) (2026-01-22)
+
+### 🐛 Bug Fixes
+
+* add extra-plugins for release job ([a280985](https://github.com/bauer-group/CS-ScreenRecorder/commit/a280985c345c9fa53a9f3ee0420d4b755c2f7199))
+* Version Information in Backend UI ([1c97cfb](https://github.com/bauer-group/CS-ScreenRecorder/commit/1c97cfb2d567a499ee75bbea4134dcff73950833))
+* Version Information in Backend UI ([5b3017e](https://github.com/bauer-group/CS-ScreenRecorder/commit/5b3017e6233bc2c6f637cb0c09413db94538e0d7))
+
 # [0.8.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.7.0...v0.8.0) (2026-01-15)
 
 
