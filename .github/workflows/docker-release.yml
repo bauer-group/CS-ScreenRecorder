@@ -92,6 +92,7 @@ jobs:
       target-branch: 'main'
       dry-run: false
       force-release: ${{ inputs.force-release || false }}
+      extra-plugins: '@semantic-release/exec'
     secrets: inherit
 
   # ============================================
