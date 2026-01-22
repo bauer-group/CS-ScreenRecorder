@@ -448,27 +448,19 @@ fi
 # =============================================================================
 echo -e "${BLUE}[7/7] Patching sidebar footer to show version only...${NC}"
 
-# The sidebar shows "{COMPANY_NAME} {year}." - we want to show only version
-# Remove company name prefix and replace year with version
+# After step 3, footer shows: "BAUER GROUP {new Date().getFullYear()}."
+# We want to show only: "v0.8.0"
 find "$APP_DIR" -type f \( -name "*.tsx" -o -name "*.jsx" \) 2>/dev/null | while read file; do
-    # Pattern: "Cap Software, Inc. " or "{COMPANY_NAME} " before the year
-    # Replace the whole footer text pattern with just version
     if grep -q "new Date().getFullYear()" "$file" 2>/dev/null; then
-        # Remove company prefix patterns before year (various formats)
-        # Pattern: Cap Software, Inc. {new Date().getFullYear()}
-        sed -i 's/Cap Software, Inc\. {new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
-        sed -i 's/Cap Software, Inc\.{new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
-        # Pattern: {COMPANY} {year} - generic JSX with company variable
-        sed -i 's/{[^}]*} {new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
-        # Pattern: just {new Date().getFullYear()} alone
-        sed -i "s/{new Date().getFullYear()}/\"${BRAND_VERSION}\"/g" "$file"
-        sed -i "s/{ new Date().getFullYear() }/\"${BRAND_VERSION}\"/g" "$file"
-        echo -e "${GREEN}  ✓ Replaced footer with version in $(basename "$file")${NC}"
+        # Replace year with version
+        sed -i 's/{new Date()\.getFullYear()}/'${BRAND_VERSION}'/g' "$file"
+        sed -i 's/{ new Date()\.getFullYear() }/'${BRAND_VERSION}'/g' "$file"
+        echo -e "${GREEN}  ✓ Replaced year with version in $(basename "$file")${NC}"
     fi
-    # Also handle any remaining company name + year patterns after branding patch
-    if grep -q "${BRAND_COMPANY_NAME}.*new Date" "$file" 2>/dev/null; then
-        sed -i 's/'"${BRAND_COMPANY_NAME}"' {new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
-        sed -i 's/'"${BRAND_COMPANY_NAME}"'{new Date()\.getFullYear()}/'"${BRAND_VERSION}"'/g' "$file"
+    # Remove company name prefix (left over from step 3)
+    if grep -q "${BRAND_COMPANY_NAME}" "$file" 2>/dev/null; then
+        sed -i 's/'"${BRAND_COMPANY_NAME}"' '${BRAND_VERSION}'\./'${BRAND_VERSION}'/g' "$file"
+        sed -i 's/'"${BRAND_COMPANY_NAME}"' '${BRAND_VERSION}'/'${BRAND_VERSION}'/g' "$file"
         echo -e "${GREEN}  ✓ Removed company prefix in $(basename "$file")${NC}"
     fi
 done
