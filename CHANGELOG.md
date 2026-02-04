@@ -1,3 +1,9 @@
+## [0.8.2](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.8.1...v0.8.2) (2026-01-23)
+
+### 🐛 Bug Fixes
+
+* Version Display in Backend ([8f406c5](https://github.com/bauer-group/CS-ScreenRecorder/commit/8f406c5a89566443ce28b670605f4b028647430a))
+
 ## [0.8.1](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.8.0...v0.8.1) (2026-01-22)
 
 ### 🐛 Bug Fixes
