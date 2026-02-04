@@ -108,7 +108,7 @@ jobs:
       runs-on: '["self-hosted", "linux"]'
       cache-enabled: false # Self-hosted runners have no access to GitHub Actions cache
       deploy-environment: 'production'
-      publish-to: 'both'
+      publish-to: 'ghcr'
       ghcr-image-name: 'bauer-group/CS-ScreenRecorder/screen-recorder'
       docker-image-name: 'bauergroup/screen-recorder'
 
