@@ -10,7 +10,9 @@
  * Original flow: Welcome → Organization Setup → Custom Domain → Invite Team → Download
  * Patched flow:  Welcome → Organization Setup → Download
  *
- * Strategy: Modify navigation in OrganizationSetupPage to skip directly to Download
+ * Cap v0.4.6 Stepper format:
+ *   steps = [{ id: "1", name: "Welcome", completed: ... }, ...]
+ *   currentStep detection via usePathname()
  */
 
 import fs from 'fs';
@@ -87,34 +89,92 @@ async function main() {
     // Strategy 2: Stepper - remove Custom Domain and Invite Team from steps
     // =========================================================================
     if (filename === 'Stepper.tsx') {
-      // Remove "Custom Domain" step from steps array
-      const customDomainStepRegex = /\{\s*label:\s*["']Custom Domain["'][^}]*\}\s*,?/g;
-      if (customDomainStepRegex.test(newContent)) {
-        newContent = newContent.replace(customDomainStepRegex, '/* [SELF-HOSTED] Custom Domain removed */');
-        log.ok(`Removed "Custom Domain" from Stepper`);
+
+      // --- v0.4.6 format: { id: "3", name: "Custom Domain", completed: ... } ---
+      // Remove "Custom Domain" step object from steps array
+      const customDomainNameRegex = /\{\s*id:\s*["']\d["'],\s*name:\s*["']Custom Domain["'],\s*completed:[^}]*\}\s*,?/g;
+      if (customDomainNameRegex.test(newContent)) {
+        newContent = newContent.replace(customDomainNameRegex, '/* [SELF-HOSTED] Custom Domain removed */');
+        log.ok(`Removed "Custom Domain" step from Stepper (v0.4.6 format)`);
         modified = true;
       }
 
-      // Remove "Invite your team" step from steps array
-      const inviteTeamStepRegex = /\{\s*label:\s*["']Invite your team["'][^}]*\}\s*,?/g;
-      if (inviteTeamStepRegex.test(newContent)) {
-        newContent = newContent.replace(inviteTeamStepRegex, '/* [SELF-HOSTED] Invite Team removed */');
-        log.ok(`Removed "Invite your team" from Stepper`);
+      // Remove "Invite your team" step object from steps array
+      const inviteTeamNameRegex = /\{\s*id:\s*["']\d["'],\s*name:\s*["']Invite your team["'],\s*completed:[^}]*\}\s*,?/g;
+      if (inviteTeamNameRegex.test(newContent)) {
+        newContent = newContent.replace(inviteTeamNameRegex, '/* [SELF-HOSTED] Invite Team removed */');
+        log.ok(`Removed "Invite your team" step from Stepper (v0.4.6 format)`);
         modified = true;
       }
 
-      // Fix step index mapping for download (was index 4, now index 2)
-      // "/onboarding/download": 4 -> "/onboarding/download": 2
-      if (newContent.includes('"/onboarding/download": 4')) {
+      // --- Fallback: older format with label: instead of name: ---
+      const customDomainLabelRegex = /\{\s*label:\s*["']Custom Domain["'][^}]*\}\s*,?/g;
+      if (customDomainLabelRegex.test(newContent)) {
+        newContent = newContent.replace(customDomainLabelRegex, '/* [SELF-HOSTED] Custom Domain removed */');
+        log.ok(`Removed "Custom Domain" step from Stepper (legacy format)`);
+        modified = true;
+      }
+
+      const inviteTeamLabelRegex = /\{\s*label:\s*["']Invite your team["'][^}]*\}\s*,?/g;
+      if (inviteTeamLabelRegex.test(newContent)) {
+        newContent = newContent.replace(inviteTeamLabelRegex, '/* [SELF-HOSTED] Invite Team removed */');
+        log.ok(`Removed "Invite your team" step from Stepper (legacy format)`);
+        modified = true;
+      }
+
+      // Fix Download step id: "5" -> "3" (after removing 2 steps)
+      // Match: id: "5", name: "Download"
+      const downloadIdRegex = /id:\s*["']5["'](\s*,\s*name:\s*["']Download["'])/g;
+      if (downloadIdRegex.test(newContent)) {
+        newContent = newContent.replace(downloadIdRegex, 'id: "3"$1');
+        log.ok(`Fixed Download step id: "5" → "3"`);
+        modified = true;
+      }
+
+      // Remove currentStep path mappings for removed steps (v0.4.6 uses usePathname)
+      // Remove: if (currentPath === "/onboarding/custom-domain") return "Custom Domain";
+      const customDomainPathRegex = /\s*if\s*\(\s*currentPath\s*===\s*["']\/onboarding\/custom-domain["']\s*\)\s*return\s*["']Custom Domain["'];?/g;
+      if (customDomainPathRegex.test(newContent)) {
+        newContent = newContent.replace(customDomainPathRegex, '\n\t\t/* [SELF-HOSTED] Custom Domain path removed */');
+        log.ok(`Removed Custom Domain path mapping from Stepper`);
+        modified = true;
+      }
+
+      // Remove: if (currentPath === "/onboarding/invite-team") return "Invite your team";
+      const inviteTeamPathRegex = /\s*if\s*\(\s*currentPath\s*===\s*["']\/onboarding\/invite-team["']\s*\)\s*return\s*["']Invite your team["'];?/g;
+      if (inviteTeamPathRegex.test(newContent)) {
+        newContent = newContent.replace(inviteTeamPathRegex, '\n\t\t/* [SELF-HOSTED] Invite Team path removed */');
+        log.ok(`Removed Invite Team path mapping from Stepper`);
+        modified = true;
+      }
+
+      // Fix MobileStepper step count: "Step X/5" -> "Step X/3"
+      // Replace hardcoded step count
+      if (newContent.includes('/5')) {
         newContent = newContent.replace(
-          '"/onboarding/download": 4',
-          '"/onboarding/download": 2 /* [SELF-HOSTED] adjusted index */'
+          /\{activeStep\.id\}\/5/g,
+          '{activeStep.id}/3 /* [SELF-HOSTED] 3 steps */'
         );
-        log.ok(`Adjusted download step index in Stepper`);
+        log.ok(`Fixed MobileStepper step count: 5 → 3`);
         modified = true;
       }
 
-      // Remove step index mappings for removed steps
+      // Remove completedSteps properties for removed steps (type interface)
+      // Remove: customDomain?: boolean;
+      const customDomainPropRegex = /\s*customDomain\??\s*:\s*boolean;?/g;
+      if (customDomainPropRegex.test(newContent)) {
+        newContent = newContent.replace(customDomainPropRegex, '\n\t\t/* [SELF-HOSTED] customDomain removed */');
+        modified = true;
+      }
+
+      // Remove: inviteTeam?: boolean;
+      const inviteTeamPropRegex = /\s*inviteTeam\??\s*:\s*boolean;?/g;
+      if (inviteTeamPropRegex.test(newContent)) {
+        newContent = newContent.replace(inviteTeamPropRegex, '\n\t\t/* [SELF-HOSTED] inviteTeam removed */');
+        modified = true;
+      }
+
+      // --- Legacy: Remove step index mappings (pre-v0.4.6) ---
       const customDomainIndexRegex = /["']\/onboarding\/custom-domain["']\s*:\s*\d+\s*,?/g;
       if (customDomainIndexRegex.test(newContent)) {
         newContent = newContent.replace(customDomainIndexRegex, '/* [SELF-HOSTED] removed */');
@@ -124,6 +184,15 @@ async function main() {
       const inviteTeamIndexRegex = /["']\/onboarding\/invite-team["']\s*:\s*\d+\s*,?/g;
       if (inviteTeamIndexRegex.test(newContent)) {
         newContent = newContent.replace(inviteTeamIndexRegex, '/* [SELF-HOSTED] removed */');
+        modified = true;
+      }
+
+      // Legacy: Fix download index mapping
+      if (newContent.includes('"/onboarding/download": 4')) {
+        newContent = newContent.replace(
+          '"/onboarding/download": 4',
+          '"/onboarding/download": 2 /* [SELF-HOSTED] adjusted index */'
+        );
         modified = true;
       }
     }
