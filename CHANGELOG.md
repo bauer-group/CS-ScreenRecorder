@@ -1,3 +1,15 @@
+## [0.9.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.8.2...v0.9.0) (2026-02-18)
+
+### 🚀 Features
+
+* Update to v0.4.6 ([741d021](https://github.com/bauer-group/CS-ScreenRecorder/commit/741d02167c09e85ad8505274c0759911cca97111))
+* Update to v0.4.6 ([814a9f8](https://github.com/bauer-group/CS-ScreenRecorder/commit/814a9f85c632a5db2e8da06d21e4563d6c54b16e))
+
+### 🐛 Bug Fixes
+
+* Update onboarding steps to skip irrelevant components for self-hosted deployments ([3c561a4](https://github.com/bauer-group/CS-ScreenRecorder/commit/3c561a403f5a502a854bb030bb2e14e3d139e0ec))
+* update publish target to GitHub Container Registry ([725cb9e](https://github.com/bauer-group/CS-ScreenRecorder/commit/725cb9e4863e8e543fe6707a04eb679c0533e2f3))
+
 ## [0.8.2](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.8.1...v0.8.2) (2026-01-23)
 
 ### 🐛 Bug Fixes
