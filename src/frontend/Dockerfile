@@ -12,8 +12,8 @@
 #   - Custom code patches
 #
 # Build:
-#   docker build -t screen-recording ./src
-#   docker build --build-arg CAP_VERSION=cap-v0.4.0 -t screen-recording ./src
+#   docker build -t screen-recorder-frontend ./src/frontend
+#   docker build --build-arg CAP_VERSION=cap-v0.4.6 -t screen-recorder-frontend ./src/frontend
 #
 # Documentation: https://cap.so/docs/self-hosting
 # Source: https://github.com/CapSoftware/Cap
@@ -23,7 +23,7 @@
 # -----------------------------------------------------------------------------
 # Build Arguments
 # -----------------------------------------------------------------------------
-ARG CAP_VERSION=cap-v0.4.3
+ARG CAP_VERSION=cap-v0.4.6
 ARG NODE_VERSION=24
 ARG INCLUDE_BRANDING=true
 
@@ -120,6 +120,9 @@ ENV NEXT_PUBLIC_WEB_URL="http://localhost:3000" \
     S3_INTERNAL_ENDPOINT="http://minio-server:9000" \
     S3_PUBLIC_ENDPOINT="http://minio-server:9000" \
     CAP_AWS_BUCKET_URL="http://minio-server:9000/media" \
+    MEDIA_SERVER_URL="http://media-server:3456" \
+    MEDIA_SERVER_WEBHOOK_SECRET="build-time-placeholder" \
+    MEDIA_SERVER_WEBHOOK_URL="http://localhost:3000" \
     NODE_ENV="production"
 
 # Build the web application
@@ -167,14 +170,14 @@ LABEL maintainer="Karl Bauer <karl.bauer@bauer-group.com>"
 
 # Opencontainers Metadata
 LABEL org.opencontainers.image.title="Screen Recorder [BAUER GROUP]"
-LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.licenses="AGPL-3.0"
 LABEL org.opencontainers.image.vendor="BAUER GROUP"
 LABEL org.opencontainers.image.authors="Karl Bauer <karl.bauer@bauer-group.com>"
 LABEL org.opencontainers.image.source="https://github.com/bauer-group/CS-ScreenRecorder"
 LABEL org.opencontainers.image.url="https://github.com/bauer-group/CS-ScreenRecorder"
 LABEL org.opencontainers.image.documentation="https://github.com/bauer-group/CS-ScreenRecorder#readme"
 LABEL org.opencontainers.image.description="Screen Recorder - BAUER GROUP Edition"
-LABEL org.opencontainers.image.version="0.8.2"
+LABEL org.opencontainers.image.version="0.9.0"
 
 # Extended Labels
 LABEL org.opencontainers.image.base.name="https://github.com/CapSoftware/Cap#${CAP_VERSION}"

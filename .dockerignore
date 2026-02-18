@@ -34,12 +34,12 @@ tools/
 scripts/
 
 # Source branding files (EPS/SVG/PNG sources not needed, only generated assets)
-src/branding/*.eps
-src/branding/*.svg
-src/branding/*.png
-src/branding/branding.env
+src/frontend/branding/*.eps
+src/frontend/branding/*.svg
+src/frontend/branding/*.png
+src/frontend/branding/branding.env
 
 # Keep assets and scripts for Docker build
-!src/branding/assets/
-!src/branding/apply-branding.sh
-!src/patches/
+!src/frontend/branding/assets/
+!src/frontend/branding/apply-branding.sh
+!src/frontend/patches/

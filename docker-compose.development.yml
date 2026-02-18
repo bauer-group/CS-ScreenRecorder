@@ -18,16 +18,16 @@ services:
   # ---------------------------------------------------------------------------
   # Cap Web Application
   # ---------------------------------------------------------------------------
-  screenrecorder-app:
+  frontend-server:
     # Option 1: Build custom branded image locally
     build:
-      context: ./src
+      context: ./src/frontend
       dockerfile: Dockerfile
       args:
-        CAP_VERSION: ${CAP_VERSION:-cap-v0.4.3}
+        CAP_VERSION: ${CAP_VERSION:-cap-v0.4.6}
 
     # Option 2: Use pre-built branded image from GHCR
-    # image: ghcr.io/bauer-group/cs-screenrecorder/screen-recorder:latest
+    # image: ghcr.io/bauer-group/cs-screenrecorder/frontend:latest
 
     # Option 3: Use official Cap image from GHCR
     # image: ghcr.io/capsoftware/cap-web:latest
@@ -35,6 +35,8 @@ services:
     restart: unless-stopped
     container_name: ${STACK_NAME:-SCREENRECORDER}_APP
     depends_on:
+      media-server:
+        condition: service_healthy
       mysql-server:
         condition: service_healthy
       minio-setup:
@@ -119,6 +121,11 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
 
+      # -- Media Server --
+      - MEDIA_SERVER_URL=http://media-server:3456
+      - MEDIA_SERVER_WEBHOOK_SECRET=${MEDIA_SERVER_WEBHOOK_SECRET}
+      - MEDIA_SERVER_WEBHOOK_URL=http://frontend-server:3000
+
       # -- AI Features (Optional) --
       - DEEPGRAM_API_KEY=${DEEPGRAM_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
@@ -129,6 +136,41 @@ services:
 
     ports:
       - "${EXPOSED_APP_PORT:-3000}:3000"
+    networks:
+      local:
+
+
+  # ---------------------------------------------------------------------------
+  # Cap Media Server (Video/Audio Processing)
+  # ---------------------------------------------------------------------------
+  media-server:
+    build:
+      context: ./src/mediaserver
+      dockerfile: Dockerfile
+      args:
+        CAP_VERSION: ${CAP_VERSION:-cap-v0.4.6}
+
+    # Option 2: Use pre-built image from GHCR
+    # image: ghcr.io/bauer-group/cs-screenrecorder/mediaserver:latest
+
+    # Option 3: Use official Cap image from GHCR
+    # image: ghcr.io/capsoftware/cap-media-server:latest
+
+    restart: unless-stopped
+    container_name: ${STACK_NAME:-SCREENRECORDER}_MEDIASERVER
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3456/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    environment:
+      - PORT=3456
     networks:
       local:
 

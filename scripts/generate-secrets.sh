@@ -9,6 +9,7 @@
 # - DATABASE_PASSWORD
 # - MINIO_ROOT_PASSWORD
 # - CAP_AWS_SECRET_KEY
+# - MEDIA_SERVER_WEBHOOK_SECRET (32 byte hex)
 ###############################################################################
 
 set -euo pipefail
@@ -59,6 +60,9 @@ MINIO_ROOT_PASSWORD=$(openssl rand -base64 48 | tr -dc 'a-zA-Z0-9' | head -c 32)
 # Cap S3 secret key (alphanumeric, 40 chars - AWS style, shell-safe)
 CAP_AWS_SECRET_KEY=$(openssl rand -base64 60 | tr -dc 'a-zA-Z0-9' | head -c 40)
 
+# Media server webhook secret (32 byte hex string - hex is shell-safe)
+MEDIA_SERVER_WEBHOOK_SECRET=$(openssl rand -hex 32)
+
 echo -e "${GREEN}Secrets generated successfully!${NC}"
 echo ""
 
@@ -93,6 +97,7 @@ echo -e "  ${GREEN}DATABASE_ENCRYPTION_KEY${NC}=$DATABASE_ENCRYPTION_KEY"
 echo -e "  ${GREEN}DATABASE_PASSWORD${NC}=$DATABASE_PASSWORD"
 echo -e "  ${GREEN}MINIO_ROOT_PASSWORD${NC}=$MINIO_ROOT_PASSWORD"
 echo -e "  ${GREEN}CAP_AWS_SECRET_KEY${NC}=$CAP_AWS_SECRET_KEY"
+echo -e "  ${GREEN}MEDIA_SERVER_WEBHOOK_SECRET${NC}=$MEDIA_SERVER_WEBHOOK_SECRET"
 echo ""
 echo "=========================================="
 
@@ -128,6 +133,7 @@ if [[ "$UPDATE_ENV" == true ]]; then
     update_env_var "DATABASE_PASSWORD" "$DATABASE_PASSWORD" "$ENV_FILE"
     update_env_var "MINIO_ROOT_PASSWORD" "$MINIO_ROOT_PASSWORD" "$ENV_FILE"
     update_env_var "CAP_AWS_SECRET_KEY" "$CAP_AWS_SECRET_KEY" "$ENV_FILE"
+    update_env_var "MEDIA_SERVER_WEBHOOK_SECRET" "$MEDIA_SERVER_WEBHOOK_SECRET" "$ENV_FILE"
 
     echo -e "${GREEN}.env file updated!${NC}"
 fi
@@ -143,6 +149,7 @@ echo "  - Database field encryption"
 echo "  - MySQL database authentication"
 echo "  - MinIO admin access"
 echo "  - Cap S3 service account"
+echo "  - Media server webhook authentication"
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
 echo "  1. Review .env file and configure:"

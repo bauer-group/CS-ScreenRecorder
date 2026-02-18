@@ -12,13 +12,13 @@
     [
       "@semantic-release/exec",
       {
-        "prepareCmd": "sed -i 's/^BRAND_VERSION=.*/BRAND_VERSION=\"v${nextRelease.version}\"/' src/branding/branding.env"
+        "prepareCmd": "sed -i 's/^BRAND_VERSION=.*/BRAND_VERSION=\"v${nextRelease.version}\"/' src/frontend/branding/branding.env"
       }
     ],
     [
       "@semantic-release/git",
       {
-        "assets": ["CHANGELOG.md", "src/branding/branding.env"],
+        "assets": ["CHANGELOG.md", "src/frontend/branding/branding.env"],
         "message": "chore(release): ${nextRelease.version}\n\n${nextRelease.notes}"
       }
     ],

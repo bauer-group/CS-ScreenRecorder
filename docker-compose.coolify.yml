@@ -16,14 +16,16 @@ services:
   # ---------------------------------------------------------------------------
   # Cap Web Application
   # ---------------------------------------------------------------------------
-  screenrecorder-app:
+  frontend-server:
     # Option 1: Use pre-built branded image from GHCR
-    image: ghcr.io/bauer-group/cs-screenrecorder/screen-recorder:latest
+    image: ghcr.io/bauer-group/cs-screenrecorder/frontend:latest
     # Option 2: Use official Cap image from GHCR
     # image: ghcr.io/capsoftware/cap-web:latest
     restart: unless-stopped
     container_name: SCREENRECORDER_APP
     depends_on:
+      media-server:
+        condition: service_healthy
       mysql-server:
         condition: service_healthy
       minio-setup:
@@ -116,12 +118,43 @@ services:
       # - CLOUDFRONT_KEYPAIR_ID=${CLOUDFRONT_KEYPAIR_ID}
       # - CLOUDFRONT_KEYPAIR_PRIVATE_KEY=${CLOUDFRONT_KEYPAIR_PRIVATE_KEY}
 
+      # -- Media Server --
+      - MEDIA_SERVER_URL=http://media-server:3456
+      - MEDIA_SERVER_WEBHOOK_SECRET=${MEDIA_SERVER_WEBHOOK_SECRET}
+      - MEDIA_SERVER_WEBHOOK_URL=http://frontend-server:3000
+
       # -- Workflows (Optional) --
       - WORKFLOWS_RPC_URL=${WORKFLOWS_RPC_URL:-}
       - WORKFLOWS_RPC_SECRET=${WORKFLOWS_RPC_SECRET:-}
 
     expose:
       - 3000/tcp
+    networks:
+      local:
+
+
+  # ---------------------------------------------------------------------------
+  # Cap Media Server (Video/Audio Processing)
+  # ---------------------------------------------------------------------------
+  media-server:
+    image: ghcr.io/bauer-group/cs-screenrecorder/mediaserver:latest
+    restart: unless-stopped
+    container_name: SCREENRECORDER_MEDIASERVER
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3456/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "3"
+    environment:
+      - PORT=3456
+    expose:
+      - 3456/tcp
     networks:
       local:
 

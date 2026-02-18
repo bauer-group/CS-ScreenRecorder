@@ -98,6 +98,9 @@ export async function sendEmail({
   marketing,
   scheduledAt,
   test,
+  cc,
+  replyTo,
+  fromOverride,
 }: {
   email: string;
   subject: string;
@@ -105,12 +108,17 @@ export async function sendEmail({
   marketing?: boolean;
   scheduledAt?: string;
   test?: boolean;
+  cc?: string | string[];
+  replyTo?: string;
+  fromOverride?: string;
 }) {
   // Determine sender address
   let from: string;
   const fromName = serverEnv().SMTP_FROM_NAME || "Cap";
 
-  if (useSmtp && serverEnv().SMTP_FROM) {
+  if (fromOverride) {
+    from = fromOverride;
+  } else if (useSmtp && serverEnv().SMTP_FROM) {
     from = \`\${fromName} <\${serverEnv().SMTP_FROM}>\`;
   } else if (marketing) {
     from = "Richie from Cap <richie@send.cap.so>";
@@ -134,6 +142,8 @@ export async function sendEmail({
         to,
         subject,
         html,
+        cc,
+        replyTo,
       });
       console.log(\`[SMTP] Email sent to \${to}: \${result.messageId}\`);
       return { success: true, messageId: result.messageId };
@@ -152,6 +162,8 @@ export async function sendEmail({
         subject,
         react,
         scheduledAt,
+        cc,
+        replyTo,
       });
       return result;
     } catch (error) {

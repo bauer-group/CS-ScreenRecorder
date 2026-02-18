@@ -64,7 +64,8 @@ jobs:
           "CAP_AWS_SECRET_KEY": "ci-test-s3-secret-key-40-characters-xx",
           "S3_PUBLIC_ENDPOINT": "https://assets.cap.example.com",
           "CAP_AWS_BUCKET_URL": "https://assets.cap.example.com/media",
-          "CAP_VIDEOS_DEFAULT_PUBLIC": "true"
+          "CAP_VIDEOS_DEFAULT_PUBLIC": "true",
+          "MEDIA_SERVER_WEBHOOK_SECRET": "ci-test-media-server-secret"
         }
 
   validate-scripts:
@@ -99,8 +100,8 @@ jobs:
   # Docker Build Jobs
   # ============================================
 
-  docker-build-release:
-    name: 🐳 Build & Push Docker Image
+  docker-build-frontend:
+    name: "🐳 Build & Push Frontend Image"
     needs: release
     if: needs.release.outputs.release-created == 'true'
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
@@ -109,8 +110,8 @@ jobs:
       cache-enabled: false # Self-hosted runners have no access to GitHub Actions cache
       deploy-environment: 'production'
       publish-to: 'ghcr'
-      ghcr-image-name: 'bauer-group/CS-ScreenRecorder/screen-recorder'
-      docker-image-name: 'bauergroup/screen-recorder'
+      ghcr-image-name: 'bauer-group/CS-ScreenRecorder/frontend'
+      docker-image-name: 'bauergroup/screen-recorder-frontend'
 
       release-version: ${{ needs.release.outputs.version }}
 
@@ -118,8 +119,8 @@ jobs:
       auto-tags: true
       latest-tag: true
 
-      dockerfile-path: './src/Dockerfile'
-      docker-context: './src'
+      dockerfile-path: './src/frontend/Dockerfile'
+      docker-context: './src/frontend'
       platforms: 'linux/amd64'
 
       push: true
@@ -130,8 +131,38 @@ jobs:
       sync-dockerhub-readme: true
     secrets: inherit
 
-  docker-build-pr:
-    name: 🔨 Validate Docker Build (PR)
+  docker-build-mediaserver:
+    name: "🐳 Build & Push Mediaserver Image"
+    needs: release
+    if: needs.release.outputs.release-created == 'true'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      runs-on: '["self-hosted", "linux"]'
+      cache-enabled: false
+      deploy-environment: 'production'
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/CS-ScreenRecorder/mediaserver'
+      docker-image-name: 'bauergroup/screen-recorder-mediaserver'
+
+      release-version: ${{ needs.release.outputs.version }}
+
+      update-dockerfile-version: true
+      auto-tags: true
+      latest-tag: true
+
+      dockerfile-path: './src/mediaserver/Dockerfile'
+      docker-context: './src/mediaserver'
+      platforms: 'linux/amd64'
+
+      push: true
+
+      security-scan: false
+      generate-sbom: true
+      sync-dockerhub-readme: false
+    secrets: inherit
+
+  docker-build-frontend-pr:
+    name: "🔨 Validate Frontend Build (PR)"
     needs: [validate-compose, validate-scripts]
     if: |
       github.event_name == 'pull_request' &&
@@ -140,13 +171,38 @@ jobs:
     uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
     with:
       runs-on: '["self-hosted", "linux"]'
-      cache-enabled: false # Self-hosted runners have no access to GitHub Actions cache
+      cache-enabled: false
       publish-to: 'ghcr'
-      ghcr-image-name: 'bauer-group/cs-screenrecorder/screen-recorder'
+      ghcr-image-name: 'bauer-group/cs-screenrecorder/frontend'
 
       auto-tags: true
-      dockerfile-path: './src/Dockerfile'
-      docker-context: './src'
+      dockerfile-path: './src/frontend/Dockerfile'
+      docker-context: './src/frontend'
+      platforms: 'linux/amd64'
+
+      push: false
+
+      security-scan: false
+      security-fail-on: 'CRITICAL'
+    secrets: inherit
+
+  docker-build-mediaserver-pr:
+    name: "🔨 Validate Mediaserver Build (PR)"
+    needs: [validate-compose, validate-scripts]
+    if: |
+      github.event_name == 'pull_request' &&
+      needs.validate-compose.result == 'success' &&
+      needs.validate-scripts.result == 'success'
+    uses: bauer-group/automation-templates/.github/workflows/docker-build.yml@main
+    with:
+      runs-on: '["self-hosted", "linux"]'
+      cache-enabled: false
+      publish-to: 'ghcr'
+      ghcr-image-name: 'bauer-group/cs-screenrecorder/mediaserver'
+
+      auto-tags: true
+      dockerfile-path: './src/mediaserver/Dockerfile'
+      docker-context: './src/mediaserver'
       platforms: 'linux/amd64'
 
       push: false

@@ -28,6 +28,8 @@ BRANDING_ENV="${BRANDING_ENV:-/branding/branding.env}"
 # =============================================================================
 if [ -f "$BRANDING_ENV" ]; then
     echo -e "${BLUE}Loading branding configuration from $BRANDING_ENV${NC}"
+    # Strip Windows CRLF line endings (common when editing on Windows)
+    sed -i 's/\r$//' "$BRANDING_ENV"
     # shellcheck source=/dev/null
     source "$BRANDING_ENV"
 fi
