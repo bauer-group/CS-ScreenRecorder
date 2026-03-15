@@ -1,3 +1,10 @@
+## [0.10.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.9.0...v0.10.0) (2026-03-15)
+
+### 🚀 Features
+
+* Update to v0.4.71 ([0be5032](https://github.com/bauer-group/CS-ScreenRecorder/commit/0be50320386ed9a853c6026c1b56c0ab363762d5))
+* Update to v0.4.71 ([16245cb](https://github.com/bauer-group/CS-ScreenRecorder/commit/16245cbf11eab4488c58695d60dc5302c64bdb4f))
+
 ## [0.9.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.8.2...v0.9.0) (2026-02-18)
 
 ### 🚀 Features
