@@ -20,14 +20,15 @@ This repository provides production-ready Docker Compose configurations for self
 
 ## Cap Version Compatibility
 
-| Screen Recorder Version | Cap Version  | Status       |
-| ----------------------- | ------------ | ------------ |
-| 0.5.x                   | cap-v0.3.83  | Archived     |
-| 0.6.x                   | cap-v0.4.1+  | Archived     |
-| 0.7.x - 0.8.x           | cap-v0.4.3+  | Maintained   |
-| 0.9.x                   | cap-v0.4.6+  | ✅ Current   |
+| Screen Recorder Version | Cap Version | Status     |
+| ----------------------- | ----------- | ---------- |
+| 0.5.x                   | cap-v0.3.83 | Archived   |
+| 0.6.x                   | cap-v0.4.1+ | Archived   |
+| 0.7.x - 0.8.x           | cap-v0.4.3+ | Archived   |
+| 0.9.x                   | cap-v0.4.6  | Maintained |
+| 0.10.x                  | cap-v0.4.71 | ✅ Current |
 
-**Note:** Cap 0.4.x introduces cloud services (Workflow, Tinybird) that are automatically disabled for self-hosted deployments. Cap 0.4.6 introduces the Media Server as a separate microservice for video/audio processing.
+**Note:** Cap 0.4.x introduces cloud services (Workflow, Tinybird) that are automatically disabled for self-hosted deployments. Cap 0.4.6 introduces the Media Server as a separate microservice for video/audio processing. Cap 0.4.7 replaced Intercom with a built-in Messenger widget (removed by patch 010).
 
 ## Self-Hosted Patches
 
@@ -38,11 +39,13 @@ The following patches are automatically applied during Docker build of the front
 | `002-smtp-email.ast` | SMTP email support (alternative to Resend) |
 | `003-branding.sh` | Custom BAUER GROUP branding |
 | `004-redirects.ast` | URL redirects for self-hosted deployment |
-| `005-remove-intercom.ast` | Remove Intercom chat widget |
-| `006-replace-google-with-microsoft.ast` | Replace Google OAuth with Microsoft Entra ID |
+| `006-replace-google-with-microsoft.ast` | Replace Google OAuth with Microsoft Entra ID (login + signup) |
 | `007-remove-stripe.ast` | Disable Stripe payments, enable unlimited Pro license |
 | `008-skip-onboarding-steps.ast` | Skip cloud-only onboarding steps (Custom Domain, Invite Team) |
 | `009-disable-workflow.ast` | Disable cloud services (Workflow, Tinybird) |
+| `010-remove-messenger.ast` | Remove Cap Messenger chat widget |
+
+> **Note:** Patch 005 (Remove Intercom) was retired - Cap replaced Intercom with its own Messenger widget since v0.4.7. Patch 010 handles the new widget.
 
 All patches are AST-based (using ts-morph) for robust version compatibility.
 
@@ -154,11 +157,11 @@ CS-ScreenRecorder/
 │   │   │   ├── 002-smtp-email.ast/         # SMTP email support
 │   │   │   ├── 003-branding.sh             # Custom branding
 │   │   │   ├── 004-redirects.ast/          # URL redirects
-│   │   │   ├── 005-remove-intercom.ast/    # Remove Intercom chat
 │   │   │   ├── 006-replace-google-with-microsoft.ast/  # Azure AD OAuth
 │   │   │   ├── 007-remove-stripe.ast/      # Disable payments
 │   │   │   ├── 008-skip-onboarding-steps.ast/  # Skip cloud onboarding
-│   │   │   └── 009-disable-workflow.ast/   # Disable cloud services
+│   │   │   ├── 009-disable-workflow.ast/   # Disable cloud services
+│   │   │   └── 010-remove-messenger.ast/   # Remove messenger widget
 │   │   └── branding/               # Logo sources & config
 │   │       ├── branding.env        # Branding configuration
 │   │       ├── apply-branding.sh   # Asset copy script

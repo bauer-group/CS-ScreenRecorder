@@ -13,7 +13,7 @@
 #
 # Build:
 #   docker build -t screen-recorder-frontend ./src/frontend
-#   docker build --build-arg CAP_VERSION=cap-v0.4.6 -t screen-recorder-frontend ./src/frontend
+#   docker build --build-arg CAP_VERSION=cap-v0.4.71 -t screen-recorder-frontend ./src/frontend
 #
 # Documentation: https://cap.so/docs/self-hosting
 # Source: https://github.com/CapSoftware/Cap
@@ -23,7 +23,7 @@
 # -----------------------------------------------------------------------------
 # Build Arguments
 # -----------------------------------------------------------------------------
-ARG CAP_VERSION=cap-v0.4.6
+ARG CAP_VERSION=cap-v0.4.71
 ARG NODE_VERSION=24
 ARG INCLUDE_BRANDING=true
 

@@ -1,0 +1,10 @@
+{
+  "name": "010-remove-messenger",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Remove Cap Messenger widget for self-hosted deployments",
+  "main": "index.mjs",
+  "dependencies": {
+    "glob": "^10.3.10"
+  }
+}

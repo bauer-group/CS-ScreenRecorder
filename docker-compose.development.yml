@@ -24,7 +24,7 @@ services:
       context: ./src/frontend
       dockerfile: Dockerfile
       args:
-        CAP_VERSION: ${CAP_VERSION:-cap-v0.4.6}
+        CAP_VERSION: ${CAP_VERSION:-cap-v0.4.71}
 
     # Option 2: Use pre-built branded image from GHCR
     # image: ghcr.io/bauer-group/cs-screenrecorder/frontend:latest
@@ -148,7 +148,7 @@ services:
       context: ./src/mediaserver
       dockerfile: Dockerfile
       args:
-        CAP_VERSION: ${CAP_VERSION:-cap-v0.4.6}
+        CAP_VERSION: ${CAP_VERSION:-cap-v0.4.71}
 
     # Option 2: Use pre-built image from GHCR
     # image: ghcr.io/bauer-group/cs-screenrecorder/mediaserver:latest

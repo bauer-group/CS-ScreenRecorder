@@ -12,7 +12,7 @@
 #
 # Build:
 #   docker build -t screen-recorder-mediaserver ./src/mediaserver
-#   docker build --build-arg CAP_VERSION=cap-v0.4.6 -t screen-recorder-mediaserver ./src/mediaserver
+#   docker build --build-arg CAP_VERSION=cap-v0.4.71 -t screen-recorder-mediaserver ./src/mediaserver
 #
 # Source: https://github.com/CapSoftware/Cap/tree/main/apps/media-server
 #
@@ -21,7 +21,7 @@
 # -----------------------------------------------------------------------------
 # Build Arguments
 # -----------------------------------------------------------------------------
-ARG CAP_VERSION=cap-v0.4.6
+ARG CAP_VERSION=cap-v0.4.71
 
 # =============================================================================
 # Stage 1: Source Fetcher
