@@ -1,3 +1,9 @@
+## [0.11.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.10.0...v0.11.0) (2026-04-04)
+
+### 🚀 Features
+
+* **app:** updated to Cap v0.4.82 and refactored redirects ([114dbc7](https://github.com/bauer-group/CS-ScreenRecorder/commit/114dbc7b1399d4b19ac331c0be0041ff64632407))
+
 ## [0.10.0](https://github.com/bauer-group/CS-ScreenRecorder/compare/v0.9.0...v0.10.0) (2026-03-15)
 
 ### 🚀 Features
