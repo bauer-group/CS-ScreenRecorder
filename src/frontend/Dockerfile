@@ -13,7 +13,7 @@
 #
 # Build:
 #   docker build -t screen-recorder-frontend ./src/frontend
-#   docker build --build-arg CAP_VERSION=cap-v0.4.71 -t screen-recorder-frontend ./src/frontend
+#   docker build --build-arg CAP_VERSION=cap-v0.4.82 -t screen-recorder-frontend ./src/frontend
 #
 # Documentation: https://cap.so/docs/self-hosting
 # Source: https://github.com/CapSoftware/Cap
@@ -23,7 +23,7 @@
 # -----------------------------------------------------------------------------
 # Build Arguments
 # -----------------------------------------------------------------------------
-ARG CAP_VERSION=cap-v0.4.71
+ARG CAP_VERSION=cap-v0.4.82
 ARG NODE_VERSION=24
 ARG INCLUDE_BRANDING=true
 
@@ -177,7 +177,7 @@ LABEL org.opencontainers.image.source="https://github.com/bauer-group/CS-ScreenR
 LABEL org.opencontainers.image.url="https://github.com/bauer-group/CS-ScreenRecorder"
 LABEL org.opencontainers.image.documentation="https://github.com/bauer-group/CS-ScreenRecorder#readme"
 LABEL org.opencontainers.image.description="Screen Recorder - BAUER GROUP Edition"
-LABEL org.opencontainers.image.version="0.10.0"
+LABEL org.opencontainers.image.version="0.11.0"
 
 # Extended Labels
 LABEL org.opencontainers.image.base.name="https://github.com/CapSoftware/Cap#${CAP_VERSION}"

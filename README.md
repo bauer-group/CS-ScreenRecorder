@@ -25,10 +25,11 @@ This repository provides production-ready Docker Compose configurations for self
 | 0.5.x                   | cap-v0.3.83 | Archived   |
 | 0.6.x                   | cap-v0.4.1+ | Archived   |
 | 0.7.x - 0.8.x           | cap-v0.4.3+ | Archived   |
-| 0.9.x                   | cap-v0.4.6  | Maintained |
-| 0.10.x                  | cap-v0.4.71 | ✅ Current |
+| 0.9.x                   | cap-v0.4.6  | Archived   |
+| 0.10.x                  | cap-v0.4.71 | Maintained |
+| 0.11.x                  | cap-v0.4.82 | ✅ Current |
 
-**Note:** Cap 0.4.x introduces cloud services (Workflow, Tinybird) that are automatically disabled for self-hosted deployments. Cap 0.4.6 introduces the Media Server as a separate microservice for video/audio processing. Cap 0.4.7 replaced Intercom with a built-in Messenger widget (removed by patch 010).
+**Note:** Cap 0.4.x introduces cloud services (Workflow, Tinybird) that are automatically disabled for self-hosted deployments. Cap 0.4.6 introduces the Media Server as a separate microservice for video/audio processing. Cap 0.4.7 replaced Intercom with a built-in Messenger widget (removed by patch 010). Cap 0.4.72+ removed middleware.ts — patch 004 was migrated to next.config.mjs redirects/rewrites.
 
 ## Self-Hosted Patches
 
@@ -38,7 +39,7 @@ The following patches are automatically applied during Docker build of the front
 | ----- | ----------- |
 | `002-smtp-email.ast` | SMTP email support (alternative to Resend) |
 | `003-branding.sh` | Custom BAUER GROUP branding |
-| `004-redirects.ast` | URL redirects for self-hosted deployment |
+| `004-redirects.ast` | URL redirects via next.config.mjs (terms, privacy, download) |
 | `006-replace-google-with-microsoft.ast` | Replace Google OAuth with Microsoft Entra ID (login + signup) |
 | `007-remove-stripe.ast` | Disable Stripe payments, enable unlimited Pro license |
 | `008-skip-onboarding-steps.ast` | Skip cloud-only onboarding steps (Custom Domain, Invite Team) |
@@ -47,7 +48,7 @@ The following patches are automatically applied during Docker build of the front
 
 > **Note:** Patch 005 (Remove Intercom) was retired - Cap replaced Intercom with its own Messenger widget since v0.4.7. Patch 010 handles the new widget.
 
-All patches are AST-based (using ts-morph) for robust version compatibility.
+Patches use AST-based (ts-morph) or text-based transformations for robust version compatibility.
 
 ## Quick Start
 

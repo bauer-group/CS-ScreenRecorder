@@ -1,266 +1,185 @@
 #!/usr/bin/env node
 /**
  * Redirects Patch
- * Adds custom URL redirects via Next.js middleware
+ * Adds custom URL redirects via Next.js config (redirects/rewrites)
  *
- * Uses ts-morph for robust AST-based code modifications.
+ * Since Cap v0.4.72+, middleware.ts was removed upstream.
+ * Redirects are now injected into next.config.mjs instead.
  *
  * Redirects added:
- * - /terms    -> https://go.bauer-group.com/screenrecorder-terms
- * - /privacy  -> https://go.bauer-group.com/screenrecorder-privacy
- * - /download -> CAP_CLIENT_DOWNLOAD_URL env var (if set)
+ * - /terms    -> https://go.bauer-group.com/screenrecorder-terms (permanent)
+ * - /privacy  -> https://go.bauer-group.com/screenrecorder-privacy (permanent)
+ * - /download -> CAP_CLIENT_DOWNLOAD_URL env var (conditional, non-permanent)
  */
 
-import { Project, SyntaxKind } from 'ts-morph';
 import fs from 'fs';
 import path from 'path';
 
-// Configuration
 const APP_DIR = process.env.APP_DIR || '/app';
 
-// Colors for console output
-const colors = {
-  red: '\x1b[31m',
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  reset: '\x1b[0m'
+const c = {
+  red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m',
+  blue: '\x1b[34m', reset: '\x1b[0m'
 };
 
 const log = {
-  info: (msg) => console.log(`${colors.blue}${msg}${colors.reset}`),
-  success: (msg) => console.log(`${colors.green}  ✓ ${msg}${colors.reset}`),
-  warn: (msg) => console.log(`${colors.yellow}  • ${msg}${colors.reset}`),
-  error: (msg) => console.log(`${colors.red}  ✗ ${msg}${colors.reset}`)
+  info: (msg) => console.log(`${c.blue}${msg}${c.reset}`),
+  ok: (msg) => console.log(`${c.green}  ✓ ${msg}${c.reset}`),
+  warn: (msg) => console.log(`${c.yellow}  • ${msg}${c.reset}`),
+  err: (msg) => console.log(`${c.red}  ✗ ${msg}${c.reset}`)
 };
 
-console.log(`${colors.blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`);
-console.log(`${colors.blue}  Redirects Patch (middleware)${colors.reset}`);
-console.log(`${colors.blue}  AST-based patching with ts-morph${colors.reset}`);
-console.log(`${colors.blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`);
-console.log('');
+console.log(`${c.blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+console.log(`${c.blue}  Redirects Patch (next.config.mjs)${c.reset}`);
+console.log(`${c.blue}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
 
-// Initialize ts-morph project
-const project = new Project({
-  skipAddingFilesFromTsConfig: true,
-  compilerOptions: {
-    allowJs: true,
-  }
-});
+const PATCH_MARKER = '004-redirects.ast';
 
-// Redirect configuration
-const REDIRECT_PATHS = ['/terms', '/privacy', '/download'];
-const REDIRECT_HANDLER_MARKER = 'Custom redirects';
+const CUSTOM_REDIRECTS = `\
+			// === Custom redirects (added by ${PATCH_MARKER}) ===
+			{
+				source: "/terms",
+				destination: "https://go.bauer-group.com/screenrecorder-terms",
+				permanent: true,
+			},
+			{
+				source: "/privacy",
+				destination: "https://go.bauer-group.com/screenrecorder-privacy",
+				permanent: true,
+			},`;
 
-// The redirect handler code to insert
-const REDIRECT_HANDLER_CODE = `
-  // === Custom redirects (added by 004-redirects.ast) ===
-  const customRedirects: { [key: string]: string | undefined } = {
-    "/terms": "https://go.bauer-group.com/screenrecorder-terms",
-    "/privacy": "https://go.bauer-group.com/screenrecorder-privacy",
-    "/download": process.env.CAP_CLIENT_DOWNLOAD_URL,
-  };
+const CUSTOM_DOWNLOAD_REWRITE = `\
+			// === Custom download rewrite (added by ${PATCH_MARKER}) ===
+			...(process.env.CAP_CLIENT_DOWNLOAD_URL
+				? [{
+						source: "/download",
+						destination: process.env.CAP_CLIENT_DOWNLOAD_URL,
+					}]
+				: []),`;
 
-  const redirectUrl = customRedirects[request.nextUrl.pathname];
-  if (redirectUrl) {
-    return NextResponse.redirect(redirectUrl, { status: 302 });
-  }
-  // === End custom redirects ===
-`;
-
-/**
- * Main patch function
- */
-function patchMiddleware() {
-  const filePath = path.join(APP_DIR, 'apps/web/middleware.ts');
+function patchNextConfig() {
+  const filePath = path.join(APP_DIR, 'apps/web/next.config.mjs');
 
   if (!fs.existsSync(filePath)) {
-    log.warn('middleware.ts not found - skipping redirects patch');
-    return true; // Non-critical
+    log.err('next.config.mjs not found');
+    return false;
   }
 
-  log.info('Found middleware.ts');
+  let content = fs.readFileSync(filePath, 'utf8');
 
-  const sourceFile = project.addSourceFileAtPath(filePath);
-  let text = sourceFile.getText();
-  let modified = false;
-
-  // Check if already patched
-  if (text.includes(REDIRECT_HANDLER_MARKER)) {
-    log.warn('Redirects already configured');
+  if (content.includes(PATCH_MARKER)) {
+    log.warn('Redirects already configured - skipping');
     return true;
   }
 
-  // ==========================================================================
-  // Step 1: Add redirect paths to the matcher config
-  // ==========================================================================
-  log.info('[1/2] Adding redirect paths to matcher...');
+  let modified = false;
 
-  // Find the config export with matcher array
-  // Pattern: export const config = { matcher: [...] }
-  const configVar = sourceFile.getVariableDeclaration('config');
+  // ========================================================================
+  // Step 1: Add /terms and /privacy to redirects()
+  // ========================================================================
+  log.info('[1/2] Adding /terms and /privacy redirects...');
 
-  if (configVar) {
-    const initializer = configVar.getInitializer();
+  // Pattern: find "async redirects() {" and then the "return [" inside it
+  // Insert our redirects right after "return ["
+  const redirectsReturnPattern = /(async\s+redirects\s*\(\s*\)\s*\{[\s\S]*?return\s*\[)/;
+  const redirectsMatch = content.match(redirectsReturnPattern);
 
-    if (initializer && initializer.getKind() === SyntaxKind.ObjectLiteralExpression) {
-      const configObj = initializer.asKind(SyntaxKind.ObjectLiteralExpression);
-      const matcherProp = configObj?.getProperty('matcher');
-
-      if (matcherProp) {
-        const matcherInit = matcherProp.getFirstChildByKind(SyntaxKind.ArrayLiteralExpression);
-
-        if (matcherInit) {
-          const existingElements = matcherInit.getElements().map(e => e.getText());
-
-          // Add our paths if not already present
-          for (const redirectPath of REDIRECT_PATHS) {
-            const pathStr = `"${redirectPath}"`;
-            if (!existingElements.some(e => e.includes(redirectPath))) {
-              matcherInit.insertElement(0, pathStr);
-              log.success(`Added ${redirectPath} to matcher`);
-              modified = true;
-            } else {
-              log.warn(`${redirectPath} already in matcher`);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  if (!modified) {
-    // Fallback: text-based insertion for matcher
-    log.warn('Could not find matcher via AST, trying text-based approach...');
-
-    const matcherPattern = /matcher:\s*\[/;
-    if (matcherPattern.test(text)) {
-      const pathsToAdd = REDIRECT_PATHS.map(p => `"${p}"`).join(',\n    ');
-      text = text.replace(matcherPattern, `matcher: [\n    ${pathsToAdd},`);
-      modified = true;
-      log.success('Added redirect paths to matcher (fallback)');
-    }
-  }
-
-  // ==========================================================================
-  // Step 2: Add redirect handler at the start of the middleware function
-  // ==========================================================================
-  log.info('[2/2] Adding redirect handler to middleware function...');
-
-  // Refresh source file if we modified via text
-  if (modified) {
-    sourceFile.replaceWithText(text);
-  }
-
-  // Find the middleware function
-  // Pattern: export function middleware(request) { ... }
-  // or: export async function middleware(request) { ... }
-  const middlewareFunc = sourceFile.getFunction('middleware');
-
-  if (middlewareFunc) {
-    const body = middlewareFunc.getBody();
-
-    if (body && body.getKind() === SyntaxKind.Block) {
-      // Insert our redirect handler at the beginning of the function body
-      const statements = body.getStatements();
-
-      if (statements.length > 0) {
-        // Insert before the first statement
-        statements[0].replaceWithText(REDIRECT_HANDLER_CODE.trim() + '\n\n  ' + statements[0].getText());
-        log.success('Added redirect handler to middleware function');
-        modified = true;
-      }
-    }
+  if (redirectsMatch) {
+    content = content.replace(
+      redirectsReturnPattern,
+      `$1\n${CUSTOM_REDIRECTS}`
+    );
+    log.ok('Added /terms redirect');
+    log.ok('Added /privacy redirect');
+    modified = true;
   } else {
-    // Fallback: text-based insertion
-    log.warn('Could not find middleware function via AST, trying text-based approach...');
-
-    text = sourceFile.getText();
-    const funcPattern = /export\s+(async\s+)?function\s+middleware\s*\([^)]*\)\s*\{/;
-    const match = text.match(funcPattern);
-
-    if (match) {
-      const insertPoint = match.index + match[0].length;
-      text = text.slice(0, insertPoint) + REDIRECT_HANDLER_CODE + text.slice(insertPoint);
-      sourceFile.replaceWithText(text);
-      log.success('Added redirect handler (fallback)');
-      modified = true;
-    } else {
-      log.error('Could not find middleware function');
-    }
+    log.err('Could not find redirects() function in next.config.mjs');
+    return false;
   }
 
-  // Save changes
+  // ========================================================================
+  // Step 2: Add /download to rewrites()
+  // ========================================================================
+  log.info('[2/2] Adding /download rewrite (dynamic via env var)...');
+
+  const rewritesReturnPattern = /(async\s+rewrites\s*\(\s*\)\s*\{[\s\S]*?return\s*\[)/;
+  const rewritesMatch = content.match(rewritesReturnPattern);
+
+  if (rewritesMatch) {
+    content = content.replace(
+      rewritesReturnPattern,
+      `$1\n${CUSTOM_DOWNLOAD_REWRITE}`
+    );
+    log.ok('Added /download rewrite (conditional on CAP_CLIENT_DOWNLOAD_URL)');
+    modified = true;
+  } else {
+    log.err('Could not find rewrites() function in next.config.mjs');
+    return false;
+  }
+
   if (modified) {
-    sourceFile.saveSync();
-    log.success('middleware.ts patched');
+    fs.writeFileSync(filePath, content);
+    log.ok('next.config.mjs patched');
   }
 
   return modified;
 }
 
-/**
- * Verify the patch was applied correctly
- */
 function verifyPatch() {
   log.info('Verifying configuration...');
 
-  const filePath = path.join(APP_DIR, 'apps/web/middleware.ts');
+  const filePath = path.join(APP_DIR, 'apps/web/next.config.mjs');
   if (!fs.existsSync(filePath)) {
-    return true; // File doesn't exist, nothing to verify
+    return false;
   }
 
   const content = fs.readFileSync(filePath, 'utf8');
   let success = true;
 
   if (content.includes('screenrecorder-terms')) {
-    log.success('/terms redirect configured');
+    log.ok('/terms redirect configured');
   } else {
-    log.error('/terms redirect missing');
+    log.err('/terms redirect missing');
     success = false;
   }
 
   if (content.includes('screenrecorder-privacy')) {
-    log.success('/privacy redirect configured');
+    log.ok('/privacy redirect configured');
   } else {
-    log.error('/privacy redirect missing');
+    log.err('/privacy redirect missing');
     success = false;
   }
 
   if (content.includes('CAP_CLIENT_DOWNLOAD_URL')) {
-    log.success('/download redirect configured');
+    log.ok('/download rewrite configured');
   } else {
-    log.error('/download redirect missing');
+    log.err('/download rewrite missing');
     success = false;
   }
 
   return success;
 }
 
-// =============================================================================
-// Main execution
-// =============================================================================
 async function main() {
   try {
-    const patched = patchMiddleware();
+    const patched = patchNextConfig();
     const verified = verifyPatch();
 
     console.log('');
-    console.log(`${colors.green}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`);
-    console.log(`${colors.green}  Redirects patch complete!${colors.reset}`);
-    console.log(`${colors.green}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${colors.reset}`);
-    console.log('');
-    console.log('Configured redirects (via middleware):');
-    console.log(`  ${colors.yellow}/terms${colors.reset}    → https://go.bauer-group.com/screenrecorder-terms`);
-    console.log(`  ${colors.yellow}/privacy${colors.reset}  → https://go.bauer-group.com/screenrecorder-privacy`);
-    console.log(`  ${colors.yellow}/download${colors.reset} → CAP_CLIENT_DOWNLOAD_URL environment variable`);
+    console.log(`${c.green}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}`);
+    console.log(`${c.green}  Redirects patch complete!${c.reset}`);
+    console.log(`${c.green}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${c.reset}\n`);
+    console.log('Configured redirects (via next.config.mjs):');
+    console.log(`  ${c.yellow}/terms${c.reset}    → https://go.bauer-group.com/screenrecorder-terms`);
+    console.log(`  ${c.yellow}/privacy${c.reset}  → https://go.bauer-group.com/screenrecorder-privacy`);
+    console.log(`  ${c.yellow}/download${c.reset} → CAP_CLIENT_DOWNLOAD_URL environment variable`);
     console.log('');
 
-    if (!verified) {
+    if (!patched || !verified) {
       process.exit(1);
     }
   } catch (error) {
-    console.error(`${colors.red}Patch failed:${colors.reset}`, error);
+    console.error(`${c.red}Patch failed:${c.reset}`, error);
     process.exit(1);
   }
 }

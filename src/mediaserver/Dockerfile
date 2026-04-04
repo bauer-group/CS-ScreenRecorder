@@ -12,7 +12,7 @@
 #
 # Build:
 #   docker build -t screen-recorder-mediaserver ./src/mediaserver
-#   docker build --build-arg CAP_VERSION=cap-v0.4.71 -t screen-recorder-mediaserver ./src/mediaserver
+#   docker build --build-arg CAP_VERSION=cap-v0.4.82 -t screen-recorder-mediaserver ./src/mediaserver
 #
 # Source: https://github.com/CapSoftware/Cap/tree/main/apps/media-server
 #
@@ -21,7 +21,7 @@
 # -----------------------------------------------------------------------------
 # Build Arguments
 # -----------------------------------------------------------------------------
-ARG CAP_VERSION=cap-v0.4.71
+ARG CAP_VERSION=cap-v0.4.82
 
 # =============================================================================
 # Stage 1: Source Fetcher
@@ -82,7 +82,7 @@ LABEL org.opencontainers.image.source="https://github.com/bauer-group/CS-ScreenR
 LABEL org.opencontainers.image.url="https://github.com/bauer-group/CS-ScreenRecorder"
 LABEL org.opencontainers.image.documentation="https://github.com/bauer-group/CS-ScreenRecorder#readme"
 LABEL org.opencontainers.image.description="Screen Recorder Media Server - BAUER GROUP Edition"
-LABEL org.opencontainers.image.version="0.10.0"
+LABEL org.opencontainers.image.version="0.11.0"
 
 # Extended Labels
 LABEL org.opencontainers.image.base.name="https://github.com/CapSoftware/Cap#${CAP_VERSION}"
